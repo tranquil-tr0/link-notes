@@ -87,13 +87,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.boltexponativewind'
+    namespace 'com.anonymous.linknotes'
     defaultConfig {
-        applicationId 'com.anonymous.boltexponativewind'
+        applicationId 'com.anonymous.linknotes'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.0"
+        versionName "0.1.0"
     }
     signingConfigs {
         debug {
