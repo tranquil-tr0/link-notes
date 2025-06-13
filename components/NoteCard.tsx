@@ -20,7 +20,12 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
     if (lines.length <= maxLines) return text;
     
     const truncatedLines = lines.slice(0, maxLines);
-    return truncatedLines.join('\n') + '...';
+    const lastLine = truncatedLines[truncatedLines.length - 1];
+    
+    // Remove trailing whitespace from the last line and add ellipsis
+    truncatedLines[truncatedLines.length - 1] = lastLine.trimEnd() + '...';
+    
+    return truncatedLines.join('\n');
   };
   const formatDate = (date: Date): string => {
     const now = new Date();

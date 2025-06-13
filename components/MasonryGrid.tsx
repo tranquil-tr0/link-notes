@@ -87,7 +87,7 @@ export default function MasonryGrid({
   }, [itemLayouts, items, numColumns, spacing]);
 
   // Wrapper component to measure item height
-  const MeasurableItem = ({ component, index }: { component: React.ReactElement; index: number }) => (
+  const MeasurableItem = React.memo(({ component, index }: { component: React.ReactElement; index: number }) => (
     <View
       onLayout={(event) => {
         const { height } = event.nativeEvent.layout;
@@ -97,7 +97,7 @@ export default function MasonryGrid({
     >
       {component}
     </View>
-  );
+  ));
 
   return (
     <ScrollView
@@ -107,13 +107,12 @@ export default function MasonryGrid({
     >
       {/* Render invisible items for measurement */}
       <View style={styles.measurementContainer}>
-        {items.map((component, index) => (
+        {items.map((component, index) => 
           <MeasurableItem
-            {...({key: `measure-${index}`} as any)}
             component={component}
             index={index}
-          />
-        ))}
+          /* key is handled by parent map */ />
+        )}
       </View>
 
       {/* Render visible columns */}
@@ -121,7 +120,6 @@ export default function MasonryGrid({
         <View style={styles.columnsContainer}>
           {columns.map((column, columnIndex) => (
             <View
-              {...({key: columnIndex} as any)}
               style={[
                 styles.column,
                 {
@@ -129,14 +127,15 @@ export default function MasonryGrid({
                   marginLeft: SPACING.margin
                 }
               ]}
+              /* key is handled by parent map */
             >
-              {column.map((layout, itemIndex) => (
+              {column.map((layout) => (
                 <View
-                  {...({key: layout.index} as any)}
                   style={{
-                    marginTop: itemIndex === 0 ? SPACING.margin : 0,
+                    marginTop: layout.index === 0 ? SPACING.margin : 0,
                     marginBottom: SPACING.margin
                   }}
+                  /* key is handled by parent map */
                 >
                   {layout.component}
                 </View>
