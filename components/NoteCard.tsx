@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { NotePreview } from '@/types/Note';
 import { Clock } from 'lucide-react-native';
 import { COLORS, RADIUS, SPACING } from '../theme';
@@ -13,6 +13,15 @@ interface NoteCardProps {
 }
 
 export default function NoteCard({ note, onPress, onLongPress, showTimestamp = true }: NoteCardProps) {
+  const truncateText = (text: string, maxLines: number = 10) => {
+    if (!text) return '';
+    
+    const lines = text.split('\n');
+    if (lines.length <= maxLines) return text;
+    
+    const truncatedLines = lines.slice(0, maxLines);
+    return truncatedLines.join('\n') + '...';
+  };
   const formatDate = (date: Date): string => {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -33,15 +42,10 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
     >
       {/* Frame around text and timestamp */}
       <View style={styles.frame}>
-        {/* TextInput */}
-        <TextInput
-          style={styles.textInput}
-          value={note.preview || ''}
-          multiline={true}
-          numberOfLines={10}
-          editable={false}
-          scrollEnabled={false}
-        />
+        {/* Text Display */}
+        <Text style={styles.textDisplay} numberOfLines={10}>
+          {truncateText(note.preview || '')}
+        </Text>
         
         {/* Timestamp */}
         {showTimestamp && (
@@ -73,16 +77,14 @@ const styles = StyleSheet.create({
     // shadowRadius: RADIUS.large,
     // elevation: 3,
   },
-  textInput: {
+  textDisplay: {
     backgroundColor: COLORS.secondbackground,
     borderRadius: RADIUS.small,
     fontSize: 14,
     color: COLORS.text,
     lineHeight: 20,
     fontFamily: 'monospace',
-
-    textAlignVertical: 'top',
-    maxHeight: 200, // 10 lines * 20 line height
+    padding: 12,
   },
   timestamp: {
     flexDirection: 'row',
