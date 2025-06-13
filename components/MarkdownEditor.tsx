@@ -362,7 +362,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#1f2937',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    minHeight: height - 200,
     textAlignVertical: 'top',
     paddingHorizontal: 16,
     paddingVertical: 0,
