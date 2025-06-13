@@ -1,4 +1,5 @@
-- change style of top bar (search bar)
+- change style of top bar (search bar) to be full width search items inside, plus on bottom center or right (mabe configurable?)
+    - hide the top bar on scroll
 - better note editor
 - folder support
 - settings option for showing time
