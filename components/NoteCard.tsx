@@ -7,12 +7,13 @@ interface NoteCardProps {
   note: NotePreview;
   onPress: (note: NotePreview) => void;
   onLongPress: (note: NotePreview) => void;
+  showTimestamp?: boolean;
 }
 
 const { width } = Dimensions.get('window');
 const cardWidth = (width - 48) / 2; // Account for padding and gap
 
-export default function NoteCard({ note, onPress, onLongPress }: NoteCardProps) {
+export default function NoteCard({ note, onPress, onLongPress, showTimestamp = true }: NoteCardProps) {
   const formatDate = (date: Date): string => {
     const now = new Date();
     const diffTime = Math.abs(now.getTime() - date.getTime());
@@ -32,9 +33,12 @@ export default function NoteCard({ note, onPress, onLongPress }: NoteCardProps) 
   };
 
   const getPreviewHeight = (): number => {
-    const baseHeight = 120;
-    const contentLength = note.preview.length;
-    const additionalHeight = Math.min(contentLength / 3, 80);
+    // If timestamp is hidden, use extra space for preview and allow more text
+    const baseHeight = showTimestamp ? 120 : 160;
+    // Show more characters when timestamp is off
+    const maxPreviewChars = showTimestamp ? 200 : 350;
+    const contentLength = Math.min(note.preview.length, maxPreviewChars);
+    const additionalHeight = Math.min(contentLength / 3, showTimestamp ? 80 : 140);
     return baseHeight + additionalHeight;
   };
 
@@ -51,17 +55,24 @@ export default function NoteCard({ note, onPress, onLongPress }: NoteCardProps) 
         </Text>
         
         {note.preview && (
-          <Text style={styles.preview} numberOfLines={4}>
-            {note.preview}
+          <Text
+            style={[styles.preview, !showTimestamp && styles.previewExpanded]}
+            numberOfLines={showTimestamp ? 4 : 8}
+          >
+            {showTimestamp
+              ? note.preview.slice(0, 200)
+              : note.preview.slice(0, 350)}
           </Text>
         )}
         
-        <View style={styles.footer}>
-          <View style={styles.dateContainer}>
-            <Clock size={12} color="#6b7280" />
-            <Text style={styles.date}>{formatDate(note.updatedAt)}</Text>
+        {showTimestamp && (
+          <View style={styles.footer}>
+            <View style={styles.dateContainer}>
+              <Clock size={12} color="#6b7280" />
+              <Text style={styles.date}>{formatDate(note.updatedAt)}</Text>
+            </View>
           </View>
-        </View>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -100,6 +111,9 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     lineHeight: 20,
     flex: 1,
+  },
+  previewExpanded: {
+    marginBottom: 0,
   },
   footer: {
     marginTop: 12,

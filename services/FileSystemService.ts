@@ -4,10 +4,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { openDocumentTree, listFiles, readFile, writeFile, mkdir, unlink, stat } from 'react-native-saf-x';
 import { Note, NotePreview } from '@/types/Note';
 
+interface UserPreferences {
+  showTimestamps: boolean;
+}
+
+const DEFAULT_PREFERENCES: UserPreferences = {
+  showTimestamps: true,
+};
+
 export class FileSystemService {
   private static instance: FileSystemService;
   private notesDirectory: string;
   private customDirectory: string | null = null;
+  private userPreferences: UserPreferences = DEFAULT_PREFERENCES;
 
   private constructor() {
     if (Platform.OS === 'web') {
@@ -423,5 +432,53 @@ export class FileSystemService {
     } catch (error) {
       console.error('Error deleting web note:', error);
     }
+  }
+
+  /**
+   * Load user preferences from storage
+   */
+  async loadUserPreferences(): Promise<void> {
+    try {
+      const preferencesData = await AsyncStorage.getItem('user_preferences');
+      if (preferencesData) {
+        this.userPreferences = { ...DEFAULT_PREFERENCES, ...JSON.parse(preferencesData) };
+      }
+    } catch (error) {
+      console.log('No saved preferences, using defaults');
+      this.userPreferences = DEFAULT_PREFERENCES;
+    }
+  }
+
+  /**
+   * Save user preferences to storage
+   */
+  async saveUserPreferences(preferences: Partial<UserPreferences>): Promise<void> {
+    try {
+      this.userPreferences = { ...this.userPreferences, ...preferences };
+      await AsyncStorage.setItem('user_preferences', JSON.stringify(this.userPreferences));
+    } catch (error) {
+      console.error('Failed to save user preferences:', error);
+    }
+  }
+
+  /**
+   * Get current user preferences
+   */
+  getUserPreferences(): UserPreferences {
+    return this.userPreferences;
+  }
+
+  /**
+   * Get specific preference value
+   */
+  getShowTimestamps(): boolean {
+    return this.userPreferences.showTimestamps;
+  }
+
+  /**
+   * Set timestamp visibility preference
+   */
+  async setShowTimestamps(show: boolean): Promise<void> {
+    await this.saveUserPreferences({ showTimestamps: show });
   }
 }

@@ -8,17 +8,19 @@ import {
   ScrollView,
   Alert,
   Platform,
+  Switch,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { 
+import {
   ArrowLeft,
-  Folder, 
-  Download, 
-  Upload, 
-  Trash2, 
-  Info, 
+  Folder,
+  Download,
+  Upload,
+  Trash2,
+  Info,
   FileText,
   HardDrive,
+  Clock,
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { FileSystemService } from '@/services/FileSystemService';
@@ -26,12 +28,14 @@ import { FileSystemService } from '@/services/FileSystemService';
 export default function SettingsScreen() {
   const [notesCount, setNotesCount] = useState<number>(0);
   const [storageLocation, setStorageLocation] = useState<string>('');
+  const [showTimestamps, setShowTimestamps] = useState<boolean>(true);
   const insets = useSafeAreaInsets();
   const fileSystemService = FileSystemService.getInstance();
 
   React.useEffect(() => {
     loadNotesCount();
     loadStorageLocation();
+    loadTimestampPreference();
   }, []);
 
   const loadNotesCount = async () => {
@@ -49,6 +53,24 @@ export default function SettingsScreen() {
       setStorageLocation(locationInfo.location);
     } catch (error) {
       console.error('Error loading storage location:', error);
+    }
+  };
+
+  const loadTimestampPreference = async () => {
+    try {
+      await fileSystemService.loadUserPreferences();
+      setShowTimestamps(fileSystemService.getShowTimestamps());
+    } catch (error) {
+      console.error('Error loading timestamp preference:', error);
+    }
+  };
+
+  const handleTimestampToggle = async (value: boolean) => {
+    try {
+      await fileSystemService.setShowTimestamps(value);
+      setShowTimestamps(value);
+    } catch (error) {
+      console.error('Error saving timestamp preference:', error);
     }
   };
 
@@ -165,25 +187,31 @@ export default function SettingsScreen() {
     );
   };
 
-  const SettingItem = ({ 
-    icon, 
-    title, 
-    subtitle, 
-    onPress, 
+  const SettingItem = ({
+    icon,
+    title,
+    subtitle,
+    onPress,
     color = '#6b7280',
-    dangerous = false 
+    dangerous = false,
+    showSwitch = false,
+    switchValue = false,
+    onSwitchChange
   }: {
     icon: React.ReactNode;
     title: string;
     subtitle?: string;
-    onPress: () => void;
+    onPress?: () => void;
     color?: string;
     dangerous?: boolean;
+    showSwitch?: boolean;
+    switchValue?: boolean;
+    onSwitchChange?: (value: boolean) => void;
   }) => (
     <TouchableOpacity
       style={styles.settingItem}
-      onPress={onPress}
-      activeOpacity={0.7}
+      onPress={showSwitch ? undefined : onPress}
+      activeOpacity={showSwitch ? 1 : 0.7}
     >
       <View style={styles.settingIcon}>
         {icon}
@@ -196,6 +224,14 @@ export default function SettingsScreen() {
           <Text style={styles.settingSubtitle}>{subtitle}</Text>
         )}
       </View>
+      {showSwitch && (
+        <Switch
+          value={switchValue}
+          onValueChange={onSwitchChange}
+          trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
+          thumbColor={switchValue ? '#ffffff' : '#f3f4f6'}
+        />
+      )}
     </TouchableOpacity>
   );
 
@@ -238,6 +274,19 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Display</Text>
+          
+          <SettingItem
+            icon={<Clock size={22} color="#6b7280" />}
+            title="Show Timestamps"
+            subtitle="Display timestamps at the bottom of notes"
+            showSwitch={true}
+            switchValue={showTimestamps}
+            onSwitchChange={handleTimestampToggle}
+          />
         </View>
 
         <View style={styles.section}>

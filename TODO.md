@@ -2,8 +2,7 @@
     - hide the top bar on scroll
 - better note editor
 - folder support
-- settings option for showing time
-- settings option for sort
+- settings option for note sorting mode (recent, alphabetical)
 - maybeee settings option for custom color scheme
 - settings option for color scheme (i feel like dark/light is kinda minimum)
 - improve ui generally
@@ -13,3 +12,6 @@
 - test import/export when data is stored in app storage
     - remove import/export settings options when data is not in app internal storage
 - add welcome screen to prompt a selection of data location on start
+- look into optimizing start times
+- replace initial "no notes" with loading screen instead
+- decrease side margins

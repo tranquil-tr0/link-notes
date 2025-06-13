@@ -7,11 +7,12 @@ interface MasonryGridProps {
   notes: NotePreview[];
   onNotePress: (note: NotePreview) => void;
   onNoteLongPress: (note: NotePreview) => void;
+  showTimestamp?: boolean;
 }
 
 const { width } = Dimensions.get('window');
 
-export default function MasonryGrid({ notes, onNotePress, onNoteLongPress }: MasonryGridProps) {
+export default function MasonryGrid({ notes, onNotePress, onNoteLongPress, showTimestamp = true }: MasonryGridProps) {
   const columns = useMemo(() => {
     const leftColumn: NotePreview[] = [];
     const rightColumn: NotePreview[] = [];
@@ -41,6 +42,7 @@ export default function MasonryGrid({ notes, onNotePress, onNoteLongPress }: Mas
               note={note}
               onPress={onNotePress}
               onLongPress={onNoteLongPress}
+              showTimestamp={showTimestamp}
             />
           ))}
         </View>
@@ -52,6 +54,7 @@ export default function MasonryGrid({ notes, onNotePress, onNoteLongPress }: Mas
               note={note}
               onPress={onNotePress}
               onLongPress={onNoteLongPress}
+              showTimestamp={showTimestamp}
             />
           ))}
         </View>

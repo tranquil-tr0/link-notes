@@ -22,6 +22,7 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showTimestamp, setShowTimestamp] = useState(true);
   const insets = useSafeAreaInsets();
 
   const fileSystemService = FileSystemService.getInstance();
@@ -29,9 +30,15 @@ export default function HomeScreen() {
   const loadNotes = async () => {
     setLoading(true);
     try {
+      // Load user preferences first
+      await fileSystemService.loadUserPreferences();
+      
       const loadedNotes = await fileSystemService.getAllNotes();
       setNotes(loadedNotes);
       setFilteredNotes(loadedNotes);
+      
+      // Update timestamp visibility setting
+      setShowTimestamp(fileSystemService.getShowTimestamps());
     } catch (error) {
       console.error('Error loading notes:', error);
     } finally {
@@ -42,6 +49,17 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadNotes();
+    }, [])
+  );
+
+  // Additional focus effect to update preferences when returning from settings
+  useFocusEffect(
+    useCallback(() => {
+      const updatePreferences = async () => {
+        await fileSystemService.loadUserPreferences();
+        setShowTimestamp(fileSystemService.getShowTimestamps());
+      };
+      updatePreferences();
     }, [])
   );
 
@@ -202,6 +220,7 @@ export default function HomeScreen() {
             notes={filteredNotes}
             onNotePress={handleNotePress}
             onNoteLongPress={handleNoteLongPress}
+            showTimestamp={showTimestamp}
           />
         )}
       </View>
