@@ -8,6 +8,7 @@ interface NoteCardProps {
   onPress: (note: NotePreview) => void;
   onLongPress: (note: NotePreview) => void;
   showTimestamp?: boolean;
+  onTextBoxLayout?: (size: { width: number; height: number }) => void;
 }
 
 const { width } = Dimensions.get('window');
@@ -32,18 +33,31 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
       .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
   };
 
-  const getPreviewHeight = (): number => {
-    // Use the same base height regardless of timestamp visibility
-    const baseHeight = 100;
-    const maxPreviewChars = showTimestamp ? 200 : 350;
-    const contentLength = Math.min(note.preview.length, maxPreviewChars);
-    const additionalHeight = Math.min(contentLength / 3, showTimestamp ? 80 : 140);
-    return baseHeight + additionalHeight;
-  };
+  // Margin to add around the text box inside the card
+  const CARD_MARGIN = 12;
+
+  // Deterministically calculate textbox size based on content length and bounded width
+  function calcTextBoxSize(content: string) {
+    const maxChars = 400;
+    const chars = Math.min(content.length, maxChars);
+    const { width: screenWidth } = Dimensions.get('window');
+    const maxColumnWidth = Math.floor((screenWidth - 48) / 2); // match MasonryGrid column
+    const charsPerLine = Math.floor((maxColumnWidth - 2 * CARD_MARGIN) / 8); // 8px per char
+    const lineHeight = 20; // px, matches styles.preview
+    const minLines = 2;
+    const lines = Math.max(minLines, Math.ceil(chars / charsPerLine));
+    const width = maxColumnWidth - 2 * CARD_MARGIN;
+    const height = lines * lineHeight + 48; // 48px for title/timestamp padding
+    return { width, height };
+  }
+
+  const textBoxSize = calcTextBoxSize(note.preview || "");
+  const cardWidth = textBoxSize.width + 2 * CARD_MARGIN;
+  const cardHeight = textBoxSize.height + 2 * CARD_MARGIN;
 
   return (
     <TouchableOpacity
-      style={[styles.card, { width: cardWidth, height: getPreviewHeight() }]}
+      style={[styles.card, { width: cardWidth, height: cardHeight, padding: CARD_MARGIN }]}
       onPress={() => onPress(note)}
       onLongPress={() => onLongPress(note)}
       activeOpacity={0.7}

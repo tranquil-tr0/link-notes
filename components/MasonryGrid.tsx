@@ -13,19 +13,41 @@ interface MasonryGridProps {
 const { width } = Dimensions.get('window');
 
 export default function MasonryGrid({ notes, onNotePress, onNoteLongPress, showTimestamp = true }: MasonryGridProps) {
-  const columns = useMemo(() => {
-    const leftColumn: NotePreview[] = [];
-    const rightColumn: NotePreview[] = [];
-    
-    notes.forEach((note, index) => {
-      if (index % 2 === 0) {
-        leftColumn.push(note);
+  // Margin must match NoteCard's CARD_MARGIN
+  const CARD_MARGIN = 12;
+
+  // Deterministically calculate textbox size based on content length
+  function calcTextBoxSize(content: string) {
+    const maxChars = 400;
+    const chars = Math.min(content.length, maxChars);
+    const { width: screenWidth } = Dimensions.get('window');
+    const maxColumnWidth = Math.floor((screenWidth - 48) / 2); // match column width
+    const charsPerLine = Math.floor((maxColumnWidth - 2 * CARD_MARGIN) / 8); // 8px per char
+    const lineHeight = 20; // px, matches styles.preview
+    const minLines = 2;
+    const lines = Math.max(minLines, Math.ceil(chars / charsPerLine));
+    const width = maxColumnWidth - 2 * CARD_MARGIN;
+    const height = lines * lineHeight + 48; // 48px for title/timestamp padding
+    return { width, height };
+  }
+
+  // Simple 2-column masonry: assign each card to the column with the least total height
+  const columns = React.useMemo(() => {
+    const left: { note: NotePreview; size: { width: number; height: number } }[] = [];
+    const right: { note: NotePreview; size: { width: number; height: number } }[] = [];
+    let leftHeight = 0;
+    let rightHeight = 0;
+    notes.forEach(note => {
+      const size = calcTextBoxSize(note.preview || "");
+      if (leftHeight <= rightHeight) {
+        left.push({ note, size });
+        leftHeight += size.height + 2 * CARD_MARGIN;
       } else {
-        rightColumn.push(note);
+        right.push({ note, size });
+        rightHeight += size.height + 2 * CARD_MARGIN;
       }
     });
-    
-    return { leftColumn, rightColumn };
+    return { left, right };
   }, [notes]);
 
   return (
@@ -36,7 +58,7 @@ export default function MasonryGrid({ notes, onNotePress, onNoteLongPress, showT
     >
       <View style={styles.grid}>
         <View style={styles.column}>
-          {columns.leftColumn.map((note) => (
+          {columns.left.map(({ note }) => (
             <NoteCard
               key={note.filename}
               note={note}
@@ -46,9 +68,8 @@ export default function MasonryGrid({ notes, onNotePress, onNoteLongPress, showT
             />
           ))}
         </View>
-        
         <View style={styles.column}>
-          {columns.rightColumn.map((note) => (
+          {columns.right.map(({ note }) => (
             <NoteCard
               key={note.filename}
               note={note}
