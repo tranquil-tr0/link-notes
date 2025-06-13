@@ -1,5 +1,5 @@
 export const SPACING = {
-  padding: 10,
+  padding: 5,
   margin: 10,
   bottom: 50,
 } as const;
@@ -17,6 +17,7 @@ export const COLORS = {
   elementbackground: '#e5e7eb',
   shadow: '#000',
   outline: '#000',
+  text: '#1f2937',
 } as const;
 
 export type SpacingKey = keyof typeof SPACING;

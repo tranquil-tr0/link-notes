@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.secondbackground,
     borderRadius: RADIUS.small,
     fontSize: 14,
-    color: '#374151',
+    color: COLORS.text,
     lineHeight: 20,
     fontFamily: 'monospace',
 

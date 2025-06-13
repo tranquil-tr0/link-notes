@@ -130,10 +130,13 @@ export default function MasonryGrid({
                 }
               ]}
             >
-              {column.map(layout => (
+              {column.map((layout, itemIndex) => (
                 <View
                   {...({key: layout.index} as any)}
-                  style={{ marginBottom: spacing }}
+                  style={{
+                    marginTop: itemIndex === 0 ? SPACING.margin : 0,
+                    marginBottom: SPACING.margin
+                  }}
                 >
                   {layout.component}
                 </View>
@@ -151,7 +154,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingVertical: 0,
+    paddingBottom: SPACING.margin,
   },
   measurementContainer: {
     position: 'absolute',
