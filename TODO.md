@@ -15,3 +15,4 @@
 - look into optimizing start times
 - replace initial "no notes" with loading screen instead
 - decrease side margins
+- local image embed is broken
