@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform } from 'react-native';
 import { MarkdownTextInput, type MarkdownRange } from '@expensify/react-native-live-markdown';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface MarkdownEditorProps {
   value: string;
@@ -299,6 +300,8 @@ export default function MarkdownEditor({
   onSave,
   placeholder = 'Start typing your note...',
 }: MarkdownEditorProps) {
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.container}>
       <View style={styles.toolbar}>
@@ -315,7 +318,7 @@ export default function MarkdownEditor({
         onChangeText={onChangeText}
         parser={parseObsidianMarkdown}
         placeholder={placeholder}
-        style={styles.textInput}
+        style={[styles.textInput, { paddingBottom: insets.bottom }]}
         markdownStyle={markdownStyle}
         multiline
         autoFocus
