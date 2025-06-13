@@ -126,10 +126,10 @@ export default function MasonryGrid({
                 }
               ]}
             >
-              {column.map((layout) => React.cloneElement(
+              {column.map((layout, itemIdx) => React.cloneElement(
                 <View
                   style={{
-                    marginTop: layout.index === 0 ? SPACING.margin : 0,
+                    marginTop: itemIdx === 0 ? SPACING.margin : 0,
                     marginBottom: SPACING.margin
                   }}
                 >
