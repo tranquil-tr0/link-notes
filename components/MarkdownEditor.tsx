@@ -1,7 +1,6 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform, KeyboardAvoidingView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { MarkdownTextInput, type MarkdownRange } from '@expensify/react-native-live-markdown';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface MarkdownEditorProps {
   value: string;
@@ -300,14 +299,24 @@ export default function MarkdownEditor({
   onSave,
   placeholder = 'Start typing your note...',
 }: MarkdownEditorProps) {
-  const insets = useSafeAreaInsets();
-  
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}
-    >
+  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidHideListener?.remove();
+      keyboardDidShowListener?.remove();
+    };
+  }, []);
+
+  const content = (
+    <>
       <View style={styles.toolbar}>
         <TouchableOpacity
           style={[styles.toolbarButton, styles.saveButton]}
@@ -328,7 +337,25 @@ export default function MarkdownEditor({
         autoFocus
         textAlignVertical="top"
       />
-    </KeyboardAvoidingView>
+    </>
+  );
+
+  if (isKeyboardVisible) {
+    return (
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior="padding"
+        keyboardVerticalOffset={0}
+      >
+        {content}
+      </KeyboardAvoidingView>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {content}
+    </View>
   );
 }
 
@@ -373,5 +400,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 0,
     flex: 1,
+    marginBottom: 0,
   },
 });
