@@ -1,6 +1,7 @@
 export const SPACING = {
   padding: 5,
   margin: 10,
+  smallMargin: 2.5,
   bottom: 50,
 } as const;
 

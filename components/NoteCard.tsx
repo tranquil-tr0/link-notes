@@ -66,6 +66,11 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
     >
       {/* Frame around text and timestamp */}
       <View style={styles.frame}>
+        {/* Title */}
+        <Text style={styles.title} numberOfLines={1}>
+          {note.filename.replace(/\.md$/, '')}
+        </Text>
+        
         {/* Text Display */}
         <Text style={styles.textDisplay} numberOfLines={10}>
           {truncateText(note.preview || '')}
@@ -101,20 +106,27 @@ const styles = StyleSheet.create({
     // shadowRadius: RADIUS.large,
     // elevation: 3,
   },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: SPACING.smallMargin,
+    paddingHorizontal: 4,
+  },
   textDisplay: {
-    backgroundColor: COLORS.secondbackground,
+    backgroundColor: COLORS.elementbackground,
     borderRadius: RADIUS.small,
     fontSize: 14,
     color: COLORS.text,
     lineHeight: 20,
     fontFamily: 'monospace',
-    padding: 12,
+    padding: SPACING.padding,
   },
   timestamp: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    paddingTop: 8,
+    paddingTop: 0,
     borderTopWidth: 1,
     borderTopColor: '#e5e7eb',
   },
