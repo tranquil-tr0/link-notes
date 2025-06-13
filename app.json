@@ -12,7 +12,8 @@
       "supportsTablet": true,
       "infoPlist": {
         "UIViewControllerBasedStatusBarAppearance": false
-      }
+      },
+      "edgeToEdgeEnabled": true
     },
     "android": {
       "adaptiveIcon": {
