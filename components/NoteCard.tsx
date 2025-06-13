@@ -22,8 +22,27 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
     const truncatedLines = lines.slice(0, maxLines);
     const lastLine = truncatedLines[truncatedLines.length - 1];
     
-    // Remove trailing whitespace from the last line and add ellipsis
-    truncatedLines[truncatedLines.length - 1] = lastLine.trimEnd() + '...';
+    // Handle ellipsis placement to avoid spacing issues
+    const trimmedLastLine = lastLine.trimEnd();
+    if (trimmedLastLine.length === 0) {
+      // If the last line is empty, add ellipsis to the previous non-empty line
+      // or create a single ellipsis line
+      if (truncatedLines.length > 1) {
+        const prevLineIndex = truncatedLines.length - 2;
+        const prevLine = truncatedLines[prevLineIndex].trimEnd();
+        if (prevLine.length > 0) {
+          truncatedLines[prevLineIndex] = prevLine + '…';
+          truncatedLines.pop(); // Remove the empty last line
+        } else {
+          truncatedLines[truncatedLines.length - 1] = '…';
+        }
+      } else {
+        truncatedLines[truncatedLines.length - 1] = '…';
+      }
+    } else {
+      // Use single ellipsis character instead of three dots to avoid spacing issues
+      truncatedLines[truncatedLines.length - 1] = trimmedLastLine + '…';
+    }
     
     return truncatedLines.join('\n');
   };
