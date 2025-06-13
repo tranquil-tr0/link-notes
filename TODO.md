@@ -19,3 +19,4 @@
 - notes editor does not consider keyboard
 - consider setting to not show note title if it starts with "Untitled"
 - *maybe* I'll look at the note cards again
+- consider forking markdown editor

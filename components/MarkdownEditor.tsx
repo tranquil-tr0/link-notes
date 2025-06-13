@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform } from 'react-native';
-import { MarkdownTextInput, parseExpensiMark } from '@expensify/react-native-live-markdown';
+import { MarkdownTextInput, type MarkdownRange } from '@expensify/react-native-live-markdown';
 
 interface MarkdownEditorProps {
   value: string;
@@ -16,36 +16,272 @@ const FONT_FAMILY_MONOSPACE = Platform.select({
   default: 'monospace',
 });
 
+// Custom parser for Obsidian-flavored markdown
+function parseObsidianMarkdown(input: string): MarkdownRange[] {
+  'worklet';
+  
+  const ranges: MarkdownRange[] = [];
+  
+  // Internal links [[Link]] and embeds ![[Link]]
+  const internalLinkRegex = /(!?)\[\[([^\]]+)\]\]/g;
+  let match;
+  while ((match = internalLinkRegex.exec(input)) !== null) {
+    const isEmbed = match[1] === '!';
+    ranges.push({
+      start: match.index,
+      length: match[0].length,
+      type: 'link'
+    });
+  }
+  
+  // Block references ^id
+  const blockRefRegex = /\^([a-zA-Z0-9-_]+)/g;
+  while ((match = blockRefRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: match[0].length,
+      type: 'syntax'
+    });
+  }
+  
+  // Footnotes [^id]
+  const footnoteRegex = /\[\^([^\]]+)\]/g;
+  while ((match = footnoteRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: match[0].length,
+      type: 'link'
+    });
+  }
+  
+  // Comments %%Text%%
+  const commentRegex = /%%([^%]+)%%/g;
+  while ((match = commentRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: match[0].length,
+      type: 'syntax'
+    });
+  }
+  
+  // Highlights ==Text==
+  const highlightRegex = /==([^=]+)==/g;
+  while ((match = highlightRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: 2,
+      type: 'syntax'
+    });
+    ranges.push({
+      start: match.index + 2,
+      length: match[1].length,
+      type: 'bold' // Using bold style for highlights
+    });
+    ranges.push({
+      start: match.index + 2 + match[1].length,
+      length: 2,
+      type: 'syntax'
+    });
+  }
+  
+  // Strikethrough ~~Text~~
+  const strikethroughRegex = /~~([^~]+)~~/g;
+  while ((match = strikethroughRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: 2,
+      type: 'syntax'
+    });
+    ranges.push({
+      start: match.index + 2,
+      length: match[1].length,
+      type: 'strikethrough'
+    });
+    ranges.push({
+      start: match.index + 2 + match[1].length,
+      length: 2,
+      type: 'syntax'
+    });
+  }
+  
+  // Bold **text**
+  const boldRegex = /\*\*([^*]+)\*\*/g;
+  while ((match = boldRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: 2,
+      type: 'syntax'
+    });
+    ranges.push({
+      start: match.index + 2,
+      length: match[1].length,
+      type: 'bold'
+    });
+    ranges.push({
+      start: match.index + 2 + match[1].length,
+      length: 2,
+      type: 'syntax'
+    });
+  }
+  
+  // Italic *text*
+  const italicRegex = /(?<!\*)\*([^*\s][^*]*[^*\s]|\S)\*(?!\*)/g;
+  while ((match = italicRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: 1,
+      type: 'syntax'
+    });
+    ranges.push({
+      start: match.index + 1,
+      length: match[1].length,
+      type: 'italic'
+    });
+    ranges.push({
+      start: match.index + 1 + match[1].length,
+      length: 1,
+      type: 'syntax'
+    });
+  }
+  
+  // Headers # ## ###
+  const headerRegex = /^(#{1,6})\s+(.+)$/gm;
+  while ((match = headerRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: match[1].length + 1,
+      type: 'syntax'
+    });
+    ranges.push({
+      start: match.index + match[1].length + 1,
+      length: match[2].length,
+      type: 'h1'
+    });
+  }
+  
+  // Code blocks ```
+  const codeBlockRegex = /```[\s\S]*?```/g;
+  while ((match = codeBlockRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: match[0].length,
+      type: 'pre'
+    });
+  }
+  
+  // Inline code `code`
+  const inlineCodeRegex = /`([^`]+)`/g;
+  while ((match = inlineCodeRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: 1,
+      type: 'syntax'
+    });
+    ranges.push({
+      start: match.index + 1,
+      length: match[1].length,
+      type: 'code'
+    });
+    ranges.push({
+      start: match.index + 1 + match[1].length,
+      length: 1,
+      type: 'syntax'
+    });
+  }
+  
+  // Task lists - [ ] and - [x]
+  const taskRegex = /^(\s*-\s+)\[([ x])\]/gm;
+  while ((match = taskRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index + match[1].length,
+      length: 3,
+      type: 'syntax'
+    });
+  }
+  
+  // Blockquotes >
+  const blockquoteRegex = /^>\s+(.+)$/gm;
+  while ((match = blockquoteRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: 2,
+      type: 'syntax'
+    });
+    ranges.push({
+      start: match.index + 2,
+      length: match[1].length,
+      type: 'blockquote'
+    });
+  }
+  
+  // Callouts > [!note]
+  const calloutRegex = /^>\s+\[!([^\]]+)\]/gm;
+  while ((match = calloutRegex.exec(input)) !== null) {
+    ranges.push({
+      start: match.index,
+      length: match[0].length,
+      type: 'syntax'
+    });
+  }
+  
+  return ranges;
+}
+
 const markdownStyle = {
   syntax: {
-    color: 'gray',
+    color: '#6b7280', // Gray for syntax elements
+    opacity: 0.7,
   },
   link: {
-    color: 'blue',
+    color: '#3b82f6', // Blue for links and internal links
+    textDecorationLine: 'underline',
   },
   h1: {
-    fontSize: 25,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
   },
   emoji: {
     fontSize: 20,
   },
   blockquote: {
-    borderColor: 'gray',
-    borderWidth: 6,
-    marginLeft: 6,
-    paddingLeft: 6,
+    borderColor: '#d1d5db',
+    borderWidth: 4,
+    marginLeft: 8,
+    paddingLeft: 12,
+    fontStyle: 'italic',
+    color: '#6b7280',
   },
   code: {
     fontFamily: FONT_FAMILY_MONOSPACE,
-    fontSize: 20,
-    color: 'black',
-    backgroundColor: 'lightgray',
+    fontSize: 14,
+    color: '#dc2626',
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 3,
   },
   pre: {
     fontFamily: FONT_FAMILY_MONOSPACE,
-    fontSize: 20,
-    color: 'black',
-    backgroundColor: 'lightgray',
+    fontSize: 14,
+    color: '#1f2937',
+    backgroundColor: '#f3f4f6',
+    padding: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  bold: {
+    fontWeight: 'bold',
+    color: '#fbbf24', // Yellow-orange for highlights (==text==)
+    backgroundColor: '#fef3c7',
+  },
+  italic: {
+    fontStyle: 'italic',
+  },
+  strikethrough: {
+    textDecorationLine: 'line-through',
+    color: '#6b7280',
   },
   mentionHere: {
     color: 'green',
@@ -77,7 +313,7 @@ export default function MarkdownEditor({
       <MarkdownTextInput
         value={value}
         onChangeText={onChangeText}
-        parser={parseExpensiMark}
+        parser={parseObsidianMarkdown}
         placeholder={placeholder}
         style={styles.textInput}
         markdownStyle={markdownStyle}
