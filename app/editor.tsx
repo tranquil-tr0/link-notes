@@ -9,12 +9,13 @@ import {
   TextInput,
   BackHandler,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Trash2 } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import MarkdownEditor from '@/components/MarkdownEditor';
 import { Note } from '@/types/Note';
 import { FileSystemService } from '@/services/FileSystemService';
@@ -263,10 +264,6 @@ export default function EditorScreen() {
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1 }}
-        extraScrollHeight={Platform.OS === 'ios' ? 120 : 300} // Further increased this value
-        enableAutomaticScroll={true}
-        enableOnAndroid={true}
-        keyboardShouldPersistTaps="handled"
       >
         <TextInput
           style={styles.titleInput}
