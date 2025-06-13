@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform, KeyboardAvoidingView, Keyboard } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform } from 'react-native';
 import { MarkdownTextInput, type MarkdownRange } from '@expensify/react-native-live-markdown';
 
 interface MarkdownEditorProps {
@@ -299,24 +299,8 @@ export default function MarkdownEditor({
   onSave,
   placeholder = 'Start typing your note...',
 }: MarkdownEditorProps) {
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
-      setKeyboardVisible(true);
-    });
-    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-      setKeyboardVisible(false);
-    });
-
-    return () => {
-      keyboardDidHideListener?.remove();
-      keyboardDidShowListener?.remove();
-    };
-  }, []);
-
-  const content = (
-    <>
+  return (
+    <View style={styles.container}>
       <View style={styles.toolbar}>
         <TouchableOpacity
           style={[styles.toolbarButton, styles.saveButton]}
@@ -337,24 +321,6 @@ export default function MarkdownEditor({
         autoFocus
         textAlignVertical="top"
       />
-    </>
-  );
-
-  if (isKeyboardVisible) {
-    return (
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior="padding"
-        keyboardVerticalOffset={0}
-      >
-        {content}
-      </KeyboardAvoidingView>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      {content}
     </View>
   );
 }
@@ -371,7 +337,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 0,
+    borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   toolbarButton: {
@@ -396,9 +362,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#1f2937',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    minHeight: height - 200,
     textAlignVertical: 'top',
-    paddingHorizontal: 16,
-    paddingVertical: 0,
+    padding: 16,
     flex: 1,
     marginBottom: 0,
   },
