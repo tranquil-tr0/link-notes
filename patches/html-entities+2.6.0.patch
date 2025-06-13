@@ -1,3 +1,21 @@
+diff --git a/node_modules/html-entities/dist/commonjs/index.js b/node_modules/html-entities/dist/commonjs/index.js
+index f871ed4..0a634e6 100644
+--- a/node_modules/html-entities/dist/commonjs/index.js
++++ b/node_modules/html-entities/dist/commonjs/index.js
+@@ -1,3 +1,4 @@
++'worklet';
+ "use strict";
+ var __assign = (this && this.__assign) || function () {
+     __assign = Object.assign || function(t) {
+diff --git a/node_modules/html-entities/dist/esm/index.js b/node_modules/html-entities/dist/esm/index.js
+index 4161497..bdbd177 100644
+--- a/node_modules/html-entities/dist/esm/index.js
++++ b/node_modules/html-entities/dist/esm/index.js
+@@ -1,3 +1,4 @@
++'worklet';
+ var __assign = (this && this.__assign) || function () {
+     __assign = Object.assign || function(t) {
+         for (var s, i = 1, n = arguments.length; i < n; i++) {
 diff --git a/node_modules/html-entities/src/index.ts b/node_modules/html-entities/src/index.ts
 index 197413e..d3d08a9 100644
 --- a/node_modules/html-entities/src/index.ts
