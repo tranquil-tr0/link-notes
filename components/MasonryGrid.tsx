@@ -107,18 +107,16 @@ export default function MasonryGrid({
     >
       {/* Render invisible items for measurement */}
       <View style={styles.measurementContainer}>
-        {items.map((component, index) => 
-          <MeasurableItem
-            component={component}
-            index={index}
-          /* key is handled by parent map */ />
-        )}
+        {items.map((item, idx) => React.cloneElement(
+          <MeasurableItem component={item} index={idx} />,
+          { key: `measure-${idx}` }
+        ))}
       </View>
 
       {/* Render visible columns */}
       {columns.length > 0 && (
         <View style={styles.columnsContainer}>
-          {columns.map((column, columnIndex) => (
+          {columns.map((column, colIdx) => React.cloneElement(
             <View
               style={[
                 styles.column,
@@ -127,20 +125,20 @@ export default function MasonryGrid({
                   marginLeft: SPACING.margin
                 }
               ]}
-              /* key is handled by parent map */
             >
-              {column.map((layout) => (
+              {column.map((layout) => React.cloneElement(
                 <View
                   style={{
                     marginTop: layout.index === 0 ? SPACING.margin : 0,
                     marginBottom: SPACING.margin
                   }}
-                  /* key is handled by parent map */
                 >
                   {layout.component}
-                </View>
+                </View>,
+                { key: `item-${layout.index}` }
               ))}
-            </View>
+            </View>,
+            { key: `column-${colIdx}` }
           ))}
         </View>
       )}
