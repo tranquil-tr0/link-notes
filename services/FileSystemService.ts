@@ -119,13 +119,13 @@ export class FileSystemService {
    * Sanitize a title to be used as a filename
    */
   private sanitizeFilename(title: string): string {
-    // Remove or replace invalid characters for filesystem
+    // Remove invalid characters for filesystem but keep spaces
     return title
       .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
-      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
       .replace(/\.+$/, '') // Remove trailing dots
       .substring(0, 100) // Limit length
-      .trim() || 'untitled'; // Fallback if empty
+      .trim() || 'Untitled'; // Fallback if empty
   }
 
   /**
@@ -325,7 +325,7 @@ export class FileSystemService {
     }
   }
 
-  async saveNote(note: Note): Promise<void> {
+  async saveNote(note: Note, oldFilename?: string): Promise<void> {
     if (Platform.OS === 'web') {
       await this.saveWebNote(note);
       return;
@@ -335,16 +335,23 @@ export class FileSystemService {
     
     try {
       const currentDir = this.getNotesDirectory();
-      const title = this.extractTitle(note.content);
-      const sanitizedFilename = this.sanitizeFilename(title);
+      
+      // If filename changed, delete the old file first
+      if (oldFilename && oldFilename !== note.filename) {
+        try {
+          await this.deleteNote(oldFilename);
+        } catch (error) {
+          console.log('Old file not found or could not be deleted:', error);
+        }
+      }
       
       if (currentDir.startsWith('content://')) {
         // SAF path
-        const fileUri = `${currentDir}/${sanitizedFilename}.md`;
+        const fileUri = `${currentDir}/${note.filename}.md`;
         await writeFile(fileUri, note.content);
       } else {
         // Regular file system path
-        const filePath = `${currentDir}${sanitizedFilename}.md`;
+        const filePath = `${currentDir}${note.filename}.md`;
         await FileSystem.writeAsStringAsync(filePath, note.content);
       }
     } catch (error) {

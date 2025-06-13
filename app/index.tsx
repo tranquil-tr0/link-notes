@@ -48,7 +48,6 @@ export default function HomeScreen() {
   const formatFilenameAsTitle = (filename: string): string => {
     // Convert filename to display title
     return filename
-      .replace(/_/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
   };
 

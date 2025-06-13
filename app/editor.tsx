@@ -87,13 +87,13 @@ export default function EditorScreen() {
   };
 
   const sanitizeFilename = (title: string): string => {
-    // Remove or replace invalid characters for filesystem
+    // Remove invalid characters for filesystem but keep spaces
     return title
       .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
-      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/\s+/g, ' ') // Normalize multiple spaces to single space
       .replace(/\.+$/, '') // Remove trailing dots
       .substring(0, 100) // Limit length
-      .trim() || 'untitled'; // Fallback if empty
+      .trim() || 'Untitled'; // Fallback if empty
   };
 
   const extractTitleFromContent = (content: string): string => {
@@ -125,19 +125,19 @@ export default function EditorScreen() {
     let filename = sanitizedTitle;
     let counter = 1;
     
-    // Check if filename already exists and increment if needed
-    while (true) {
-      try {
-        const existingNote = await fileSystemService.getNote(filename);
-        if (!existingNote || filename === currentFilename) {
-          break; // Filename is available or it's the current file
-        }
-        filename = `${sanitizedTitle}_${counter}`;
+    // Get all existing notes to check for conflicts
+    try {
+      const allNotes = await fileSystemService.getAllNotes();
+      const existingFilenames = allNotes.map(note => note.filename);
+      
+      // Check if filename already exists and increment if needed
+      while (existingFilenames.includes(filename) && filename !== currentFilename) {
+        filename = `${sanitizedTitle} ${counter}`;
         counter++;
-      } catch (error) {
-        // Note doesn't exist, filename is available
-        break;
       }
+    } catch (error) {
+      console.log('Could not check existing notes:', error);
+      // If we can't check existing notes, just use the original filename
     }
     
     return filename;
@@ -146,7 +146,6 @@ export default function EditorScreen() {
   const formatFilenameAsTitle = (filename: string): string => {
     // Convert filename to display title
     return filename
-      .replace(/_/g, ' ')
       .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
   };
 
@@ -169,7 +168,7 @@ export default function EditorScreen() {
         filePath: note?.filePath || '',
       };
 
-      await fileSystemService.saveNote(noteToSave);
+      await fileSystemService.saveNote(noteToSave, note?.filename);
       setNote(noteToSave);
       setHasUnsavedChanges(false);
       
