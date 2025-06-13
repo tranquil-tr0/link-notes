@@ -1,0 +1,11 @@
+- change style of top bar (search bar)
+- better note editor
+- folder support
+- settings option for showing time
+- settings option for sort
+- maybeee settings option for custom color scheme
+- settings option for color scheme (i feel like dark/light is kinda minimum)
+- improve ui generally
+    - better light theme
+    - dark theme
+- haptics (do this later to recompile)
