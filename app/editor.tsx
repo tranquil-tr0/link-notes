@@ -8,11 +8,13 @@ import {
   Text,
   TextInput,
   BackHandler,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Trash2 } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import MarkdownEditor from '@/components/MarkdownEditor';
 import { Note } from '@/types/Note';
 import { FileSystemService } from '@/services/FileSystemService';
@@ -247,53 +249,41 @@ export default function EditorScreen() {
   return (
     <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={handleBackPress}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={24} color="#6b7280" />
+        <TouchableOpacity onPress={handleBackPress} style={styles.iconButton}>
+          <ArrowLeft size={24} color="#333" />
         </TouchableOpacity>
-        
-        <View style={styles.headerTitle}>
-          <Text style={styles.headerTitleText}>
-            {mode === 'create' ? 'New Note' : 'Edit Note'}
-          </Text>
-          {hasUnsavedChanges && (
-            <View style={styles.unsavedIndicator}>
-              <View style={styles.unsavedDot} />
-              <Text style={styles.unsavedText}>Unsaved</Text>
-            </View>
+        <View style={styles.headerRightActions}>
+          {mode === 'edit' && note && (
+            <TouchableOpacity onPress={handleDelete} style={styles.iconButton}>
+              <Trash2 size={24} color="#FF3B30" />
+            </TouchableOpacity>
           )}
         </View>
-        
-        {mode === 'edit' && note && (
-          <TouchableOpacity
-            style={[styles.headerButton, styles.deleteButton]}
-            onPress={handleDelete}
-            activeOpacity={0.7}
-          >
-            <Trash2 size={24} color="#ef4444" />
-          </TouchableOpacity>
-        )}
       </View>
-
-      <View style={styles.titleContainer}>
+      <KeyboardAwareScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1 }}
+        extraScrollHeight={Platform.OS === 'ios' ? 120 : 300} // Further increased this value
+        enableAutomaticScroll={true}
+        enableOnAndroid={true}
+        keyboardShouldPersistTaps="handled"
+      >
         <TextInput
           style={styles.titleInput}
+          placeholder="Note Title"
           value={noteTitle}
           onChangeText={handleTitleChange}
-          placeholder="Note title..."
-          placeholderTextColor="#9ca3af"
+          placeholderTextColor="#999"
         />
-      </View>
-
-      <MarkdownEditor
-        value={content}
-        onChangeText={handleContentChange}
-        onSave={saveNote}
-        placeholder="Start typing your note..."
-      />
+        <View style={styles.editorContainer}>
+          <MarkdownEditor
+            value={content}
+            onChangeText={handleContentChange}
+            onSave={saveNote}
+            placeholder="Start typing your note..."
+          />
+        </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
@@ -301,7 +291,7 @@ export default function EditorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#fff',
   },
   header: {
     flexDirection: 'row',
@@ -321,7 +311,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  headerButton: {
+  iconButton: {
     padding: 10,
     borderRadius: 12,
     backgroundColor: '#f8fafc',
@@ -334,48 +324,20 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  deleteButton: {
-    backgroundColor: '#fef2f2',
-  },
-  headerTitle: {
-    flex: 1,
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  headerTitleText: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1f2937',
-    letterSpacing: -0.3,
-  },
-  unsavedIndicator: {
+  headerRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
-  },
-  unsavedDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#f59e0b',
-    marginRight: 6,
-  },
-  unsavedText: {
-    fontSize: 12,
-    color: '#f59e0b',
-    fontWeight: '500',
-  },
-  titleContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
   },
   titleInput: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    paddingVertical: 8,
+    fontSize: 22,
+    fontWeight: 'bold',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    color: '#333',
+  },
+  editorContainer: {
+    flex: 1, // Ensure MarkdownEditor can expand
   },
 });
