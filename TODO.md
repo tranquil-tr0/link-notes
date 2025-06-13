@@ -8,7 +8,7 @@
 - improve ui generally
     - better light theme
     - dark theme
-- haptics (do this later because recompile)
+- haptics
 - test import/export when data is stored in app storage
     - remove import/export settings options when data is not in app internal storage
 - add welcome screen to prompt a selection of data location on start
