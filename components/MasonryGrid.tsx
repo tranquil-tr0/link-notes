@@ -1,84 +1,78 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { NotePreview } from '@/types/Note';
-import NoteCard from './NoteCard';
+import { SPACING, COLORS } from '../theme';
 
-interface MasonryGridProps {
-  notes: NotePreview[];
-  onNotePress: (note: NotePreview) => void;
-  onNoteLongPress: (note: NotePreview) => void;
-  showTimestamp?: boolean;
+interface MasonryItem {
+  id: string;
+  estimatedHeight?: number;
+  component: React.ReactElement;
 }
 
-const { width } = Dimensions.get('window');
+interface MasonryGridProps {
+  items: MasonryItem[];
+  numColumns?: number;
+  spacing?: number;
+}
 
-export default function MasonryGrid({ notes, onNotePress, onNoteLongPress, showTimestamp = true }: MasonryGridProps) {
-  // Margin must match NoteCard's CARD_MARGIN
-  const CARD_MARGIN = 0;
+const { width: screenWidth } = Dimensions.get('window');
 
-  // Deterministically calculate textbox size based on content length
-  function calcTextBoxSize(content: string) {
-    const maxChars = 400;
-    const chars = Math.min(content.length, maxChars);
-    const { width: screenWidth } = Dimensions.get('window');
-    const maxColumnWidth = Math.floor((screenWidth - 48) / 2); // match column width
-    const charsPerLine = Math.floor((maxColumnWidth - 2 * CARD_MARGIN) / 8); // 8px per char
-    const lineHeight = 20; // px, matches styles.preview
-    const minLines = 2;
-    const lines = Math.max(minLines, Math.ceil(chars / charsPerLine));
-    const width = maxColumnWidth - 2 * CARD_MARGIN;
-    const height = lines * lineHeight + 48; // 48px for title/timestamp padding
-    return { width, height };
-  }
+export default function MasonryGrid({
+  items,
+  numColumns = 2,
+  spacing = SPACING.padding
+}: MasonryGridProps) {
+  
+  // Calculate column width based on screen width, number of columns, and spacing
+  const columnWidth = useMemo(() => {
+    const totalSpacing = spacing * (numColumns + 1); // spacing between columns + margins
+    return (screenWidth - totalSpacing) / numColumns;
+  }, [numColumns, spacing]);
 
-  // Simple 2-column masonry: assign each card to the column with the least total height
-  const columns = React.useMemo(() => {
-    const left: { note: NotePreview; size: { width: number; height: number } }[] = [];
-    const right: { note: NotePreview; size: { width: number; height: number } }[] = [];
-    let leftHeight = 0;
-    let rightHeight = 0;
-    notes.forEach(note => {
-      const size = calcTextBoxSize(note.preview || "");
-      if (leftHeight <= rightHeight) {
-        left.push({ note, size });
-        leftHeight += size.height + 2 * CARD_MARGIN;
-      } else {
-        right.push({ note, size });
-        rightHeight += size.height + 2 * CARD_MARGIN;
-      }
+  // Distribute items across columns using a simple height-based balancing algorithm
+  const columns = useMemo(() => {
+    const columnItems: MasonryItem[][] = Array(numColumns).fill(null).map(() => []);
+    const columnHeights: number[] = Array(numColumns).fill(0);
+    
+    items.forEach(item => {
+      // Find the column with the least total height
+      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      
+      // Add item to the shortest column
+      columnItems[shortestColumnIndex].push(item);
+      
+      // Update column height (use estimated height if provided, otherwise use default)
+      const estimatedHeight = item.estimatedHeight || 150; // default height fallback
+      columnHeights[shortestColumnIndex] += estimatedHeight + spacing;
     });
-    return { left, right };
-  }, [notes]);
+    
+    return columnItems;
+  }, [items, numColumns, spacing]);
 
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={styles.contentContainer}
+      contentContainerStyle={[styles.contentContainer, { paddingHorizontal: spacing }]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.grid}>
-        <View style={styles.column}>
-          {columns.left.map(({ note }) => (
-            <NoteCard
-              key={note.filename}
-              note={note}
-              onPress={onNotePress}
-              onLongPress={onNoteLongPress}
-              showTimestamp={showTimestamp}
-            />
-          ))}
-        </View>
-        <View style={styles.column}>
-          {columns.right.map(({ note }) => (
-            <NoteCard
-              key={note.filename}
-              note={note}
-              onPress={onNotePress}
-              onLongPress={onNoteLongPress}
-              showTimestamp={showTimestamp}
-            />
-          ))}
-        </View>
+      <View style={[styles.grid, { gap: spacing }]}>
+        {columns.map((columnItems, columnIndex) => (
+          <View
+            key={columnIndex}
+            style={[styles.column, { width: columnWidth }]}
+          >
+            {columnItems.map((item, itemIndex) => (
+              <View
+                key={item.id}
+                style={[
+                  styles.itemContainer,
+                  { marginBottom: itemIndex < columnItems.length - 1 ? spacing : 0 }
+                ]}
+              >
+                {item.component}
+              </View>
+            ))}
+          </View>
+        ))}
       </View>
     </ScrollView>
   );
@@ -87,18 +81,19 @@ export default function MasonryGrid({ notes, onNotePress, onNoteLongPress, showT
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: COLORS.background,
   },
   contentContainer: {
-    padding: 16,
-    paddingBottom: 32,
+    paddingBottom: SPACING.bottom,
   },
   grid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   column: {
-    flex: 1,
-    marginHorizontal: 6,
+    flexDirection: 'column',
+  },
+  itemContainer: {
+    width: '100%',
   },
 });

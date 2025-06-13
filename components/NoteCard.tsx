@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, TextInput } from 'react-native';
 import { NotePreview } from '@/types/Note';
-import { Calendar, Clock } from 'lucide-react-native';
+import { Clock } from 'lucide-react-native';
+import { COLORS, RADIUS, SPACING } from '../theme';
 
 interface NoteCardProps {
   note: NotePreview;
@@ -10,9 +11,6 @@ interface NoteCardProps {
   showTimestamp?: boolean;
   onTextBoxLayout?: (size: { width: number; height: number }) => void;
 }
-
-const { width } = Dimensions.get('window');
-const cardWidth = (width - 48) / 2; // Account for padding and gap
 
 export default function NoteCard({ note, onPress, onLongPress, showTimestamp = true }: NoteCardProps) {
   const formatDate = (date: Date): string => {
@@ -27,65 +25,36 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
     return date.toLocaleDateString();
   };
 
-  const formatFilenameAsTitle = (filename: string): string => {
-    // Convert filename to display title
-    return filename
-      .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
-  };
-
-  // Margin to add around the text box inside the card
-  const CARD_MARGIN = 0;
-
-  // Deterministically calculate textbox size based on content length and bounded width
-  function calcTextBoxSize(content: string) {
-    const maxChars = 400;
-    const chars = Math.min(content.length, maxChars);
-    const { width: screenWidth } = Dimensions.get('window');
-    const maxColumnWidth = Math.floor((screenWidth - 48) / 2); // match MasonryGrid column
-    const charsPerLine = Math.floor((maxColumnWidth - 2 * CARD_MARGIN) / 8); // 8px per char
-    const lineHeight = 20; // px, matches styles.preview
-    const minLines = 2;
-    const lines = Math.max(minLines, Math.ceil(chars / charsPerLine));
-    const width = maxColumnWidth - 2 * CARD_MARGIN;
-    const height = lines * lineHeight + 48; // 48px for title/timestamp padding
-    return { width, height };
-  }
-
-  const textBoxSize = calcTextBoxSize(note.preview || "");
-  const cardWidth = textBoxSize.width + 2 * CARD_MARGIN;
-  const cardHeight = textBoxSize.height + 2 * CARD_MARGIN;
+  // Calculate textbox dimensions - half screen width minus 3*margin
+  const { width: screenWidth } = Dimensions.get('window');
+  const textboxWidth = Math.floor((screenWidth / 2) - ((1.5 * SPACING.margin) + (2 * SPACING.padding)));
 
   return (
     <TouchableOpacity
-      style={[styles.card, { width: cardWidth, height: cardHeight, padding: CARD_MARGIN }]}
       onPress={() => onPress(note)}
       onLongPress={() => onLongPress(note)}
       activeOpacity={0.7}
     >
-      <View style={styles.content}>
-        <Text style={styles.title} numberOfLines={2}>
-          {formatFilenameAsTitle(note.filename) || 'Untitled'}
-        </Text>
+      {/* Frame around text and timestamp */}
+      <View style={[styles.frame, { width: textboxWidth + 32 }]}>
+        {/* TextInput */}
+        <TextInput
+          style={[styles.textInput, { width: textboxWidth }]}
+          value={note.preview || ''}
+          multiline={true}
+          numberOfLines={10}
+          editable={false}
+          scrollEnabled={false}
+        />
         
-        {note.preview && (
-          <>
-            <Text
-              style={[styles.preview, !showTimestamp && styles.previewExpanded]}
-              numberOfLines={showTimestamp ? 4 : 8}
-            >
-              {showTimestamp
-                ? note.preview.slice(0, 200)
-                : note.preview.slice(0, 350)}
+        {/* Timestamp */}
+        {showTimestamp && (
+          <View style={styles.timestamp}>
+            <Clock size={12} color="#6b7280" />
+            <Text style={styles.timestampText}>
+              {formatDate(note.updatedAt)}
             </Text>
-            {showTimestamp && (
-              <View style={styles.footer}>
-                <View style={styles.dateContainer}>
-                  <Clock size={12} color="#6b7280" />
-                  <Text style={styles.date}>{formatDate(note.updatedAt)}</Text>
-                </View>
-              </View>
-            )}
-          </>
+          </View>
         )}
       </View>
     </TouchableOpacity>
@@ -93,54 +62,41 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  frame: {
+    backgroundColor: COLORS.elementbackground,
+    borderRadius: RADIUS.large,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
+    borderColor: COLORS.outline,
+    padding: SPACING.padding,
+    // shadowColor: COLORS.shadow,
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 2,
+    // },
+    // shadowOpacity: 0.1,
+    // shadowRadius: RADIUS.large,
+    // elevation: 3,
   },
-  content: {
-    padding: 16,
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 8,
-    lineHeight: 22,
-  },
-  preview: {
+  textInput: {
+    backgroundColor: COLORS.secondbackground,
+    borderRadius: RADIUS.small,
     fontSize: 14,
-    color: '#6b7280',
+    color: '#374151',
     lineHeight: 20,
-    flex: 1,
+    fontFamily: 'monospace',
+
+    textAlignVertical: 'top',
+    maxHeight: 200, // 10 lines * 20 line height
   },
-  previewExpanded: {
-    marginBottom: 0,
-  },
-  footer: {
-    marginTop: 0,
-    paddingTop: 4,
-    marginBottom: -8,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-  },
-  dateContainer: {
+  timestamp: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
   },
-  date: {
+  timestampText: {
     fontSize: 12,
     color: '#6b7280',
     marginLeft: 4,

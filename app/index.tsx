@@ -13,6 +13,7 @@ import { Plus, Search, X, Settings } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import MasonryGrid from '@/components/MasonryGrid';
+import NoteCard from '@/components/NoteCard';
 import { NotePreview } from '@/types/Note';
 import { FileSystemService } from '@/services/FileSystemService';
 
@@ -217,10 +218,18 @@ export default function HomeScreen() {
           </View>
         ) : (
           <MasonryGrid
-            notes={filteredNotes}
-            onNotePress={handleNotePress}
-            onNoteLongPress={handleNoteLongPress}
-            showTimestamp={showTimestamp}
+            items={filteredNotes.map(note => ({
+              id: note.filename,
+              component: (
+                <NoteCard
+                  note={note}
+                  onPress={handleNotePress}
+                  onLongPress={handleNoteLongPress}
+                />
+              )
+            }))}
+            numColumns={2}
+            spacing={16}
           />
         )}
       </View>
