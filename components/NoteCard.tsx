@@ -25,6 +25,13 @@ export default function NoteCard({ note, onPress, onLongPress }: NoteCardProps) 
     return date.toLocaleDateString();
   };
 
+  const formatFilenameAsTitle = (filename: string): string => {
+    // Convert filename to display title
+    return filename
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
+  };
+
   const getPreviewHeight = (): number => {
     const baseHeight = 120;
     const contentLength = note.preview.length;
@@ -41,7 +48,7 @@ export default function NoteCard({ note, onPress, onLongPress }: NoteCardProps) 
     >
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={2}>
-          {note.title || 'Untitled'}
+          {formatFilenameAsTitle(note.filename) || 'Untitled'}
         </Text>
         
         {note.preview && (

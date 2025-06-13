@@ -78,14 +78,7 @@ export class FileSystemService {
         // Store the directory URI for SAF access
         await this.setCustomDirectory(result.uri);
         
-        // Ensure the Notes subdirectory exists in the selected folder
-        try {
-          const notesDirectoryUri = `${result.uri}/Notes`;
-          await mkdir(notesDirectoryUri);
-        } catch (error) {
-          // Directory might already exist, which is fine
-          console.log('Notes directory already exists or could not be created:', error);
-        }
+        // No need to create a Notes subdirectory - use the selected directory directly
         
         return result.uri;
       }
@@ -122,6 +115,28 @@ export class FileSystemService {
     return { location: currentDir, type: 'custom' };
   }
 
+  /**
+   * Sanitize a title to be used as a filename
+   */
+  private sanitizeFilename(title: string): string {
+    // Remove or replace invalid characters for filesystem
+    return title
+      .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/\.+$/, '') // Remove trailing dots
+      .substring(0, 100) // Limit length
+      .trim() || 'untitled'; // Fallback if empty
+  }
+
+  /**
+   * Extract title from note content
+   */
+  private extractTitle(content: string): string {
+    const lines = content.split('\n');
+    const firstLine = lines[0] || '';
+    return firstLine.replace(/^#\s*/, '') || 'Untitled';
+  }
+
   async ensureDirectoryExists(): Promise<void> {
     if (Platform.OS === 'web') {
       // Web doesn't need directory creation
@@ -131,14 +146,8 @@ export class FileSystemService {
     const currentDir = this.getNotesDirectory();
     
     if (currentDir.startsWith('content://')) {
-      // SAF path - ensure Notes subdirectory exists
-      try {
-        const notesDirectoryUri = `${currentDir}/Notes`;
-        await mkdir(notesDirectoryUri);
-      } catch (error) {
-        // Directory might already exist, which is fine
-        console.log('SAF Notes directory already exists or could not be created:', error);
-      }
+      // SAF path - directory should already exist (user selected it)
+      // No need to create subdirectory
     } else {
       // Regular file system path
       const dirInfo = await FileSystem.getInfoAsync(currentDir);
@@ -174,8 +183,7 @@ export class FileSystemService {
 
   private async getSAFNotes(directoryUri: string): Promise<NotePreview[]> {
     try {
-      const notesDirectoryUri = `${directoryUri}/Notes`;
-      const files = await listFiles(notesDirectoryUri);
+      const files = await listFiles(directoryUri);
       const markdownFiles = files.filter(file => file.name.endsWith('.md') && file.type === 'file');
       
       const notes: NotePreview[] = [];
@@ -183,13 +191,11 @@ export class FileSystemService {
       for (const file of markdownFiles) {
         try {
           const content = await readFile(file.uri);
-          const lines = content.split('\n');
-          const title = lines[0]?.replace(/^#\s*/, '') || file.name.replace('.md', '');
-          const preview = lines.slice(1).join('\n').substring(0, 200);
+          const filename = file.name.replace('.md', '');
+          const preview = content.substring(0, 200);
           
           notes.push({
-            id: file.name.replace('.md', ''),
-            title,
+            filename,
             preview,
             createdAt: new Date(file.lastModified),
             updatedAt: new Date(file.lastModified),
@@ -219,15 +225,13 @@ export class FileSystemService {
         const content = await FileSystem.readAsStringAsync(filePath);
         const stat = await FileSystem.getInfoAsync(filePath);
         
-        const lines = content.split('\n');
-        const title = lines[0]?.replace(/^#\s*/, '') || file.replace('.md', '');
-        const preview = lines.slice(1).join('\n').substring(0, 200);
+        const filename = file.replace('.md', '');
+        const preview = content.substring(0, 200);
         
         const modTime = stat.exists && 'modificationTime' in stat ? stat.modificationTime : Date.now();
         
         notes.push({
-          id: file.replace('.md', ''),
-          title,
+          filename,
           preview,
           createdAt: new Date(modTime),
           updatedAt: new Date(modTime),
@@ -258,9 +262,9 @@ export class FileSystemService {
     }
   }
 
-  async getNote(id: string): Promise<Note | null> {
+  async getNote(filename: string): Promise<Note | null> {
     if (Platform.OS === 'web') {
-      return this.getWebNote(id);
+      return this.getWebNote(filename);
     }
     
     try {
@@ -268,18 +272,13 @@ export class FileSystemService {
       
       if (currentDir.startsWith('content://')) {
         // SAF path
-        const notesDirectoryUri = `${currentDir}/Notes`;
-        const fileUri = `${notesDirectoryUri}/${id}.md`;
+        const fileUri = `${currentDir}/${filename}.md`;
         
         const content = await readFile(fileUri);
         const fileStat = await stat(fileUri);
         
-        const lines = content.split('\n');
-        const title = lines[0]?.replace(/^#\s*/, '') || id;
-        
         return {
-          id,
-          title,
+          filename,
           content,
           createdAt: new Date(fileStat.lastModified),
           updatedAt: new Date(fileStat.lastModified),
@@ -287,18 +286,14 @@ export class FileSystemService {
         };
       } else {
         // Regular file system path
-        const filePath = `${currentDir}${id}.md`;
+        const filePath = `${currentDir}${filename}.md`;
         const content = await FileSystem.readAsStringAsync(filePath);
         const fileStat = await FileSystem.getInfoAsync(filePath);
-        
-        const lines = content.split('\n');
-        const title = lines[0]?.replace(/^#\s*/, '') || id;
         
         const modTime = fileStat.exists && 'modificationTime' in fileStat ? fileStat.modificationTime : Date.now();
         
         return {
-          id,
-          title,
+          filename,
           content,
           createdAt: new Date(modTime),
           updatedAt: new Date(modTime),
@@ -340,15 +335,16 @@ export class FileSystemService {
     
     try {
       const currentDir = this.getNotesDirectory();
+      const title = this.extractTitle(note.content);
+      const sanitizedFilename = this.sanitizeFilename(title);
       
       if (currentDir.startsWith('content://')) {
         // SAF path
-        const notesDirectoryUri = `${currentDir}/Notes`;
-        const fileUri = `${notesDirectoryUri}/${note.id}.md`;
+        const fileUri = `${currentDir}/${sanitizedFilename}.md`;
         await writeFile(fileUri, note.content);
       } else {
         // Regular file system path
-        const filePath = `${currentDir}${note.id}.md`;
+        const filePath = `${currentDir}${sanitizedFilename}.md`;
         await FileSystem.writeAsStringAsync(filePath, note.content);
       }
     } catch (error) {
@@ -369,7 +365,7 @@ export class FileSystemService {
       }
     }
     
-    const existingIndex = notes.findIndex(n => n.id === note.id);
+    const existingIndex = notes.findIndex(n => n.filename === note.filename);
     const noteData = {
       ...note,
       createdAt: note.createdAt.toISOString(),
@@ -396,8 +392,7 @@ export class FileSystemService {
       
       if (currentDir.startsWith('content://')) {
         // SAF path
-        const notesDirectoryUri = `${currentDir}/Notes`;
-        const fileUri = `${notesDirectoryUri}/${id}.md`;
+        const fileUri = `${currentDir}/${id}.md`;
         await unlink(fileUri);
       } else {
         // Regular file system path

@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  SafeAreaView, 
-  Alert, 
+import {
+  View,
+  StyleSheet,
+  SafeAreaView,
+  Alert,
   TouchableOpacity,
   Text,
+  TextInput,
   BackHandler,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +23,7 @@ export default function EditorScreen() {
   
   const [note, setNote] = useState<Note | null>(null);
   const [content, setContent] = useState('');
+  const [noteTitle, setNoteTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const insets = useSafeAreaInsets();
@@ -33,7 +35,8 @@ export default function EditorScreen() {
       loadNote(noteId as string);
     } else if (mode === 'create') {
       // Initialize with empty content for new note
-      setContent('# New Note\n\n');
+      setContent('');
+      setNoteTitle('');
       setHasUnsavedChanges(true);
     }
   }, [mode, noteId]);
@@ -59,6 +62,7 @@ export default function EditorScreen() {
       if (loadedNote) {
         setNote(loadedNote);
         setContent(loadedNote.content);
+        setNoteTitle(formatFilenameAsTitle(loadedNote.filename));
       } else {
         Alert.alert('Error', 'Note not found');
         router.back();
@@ -77,14 +81,73 @@ export default function EditorScreen() {
     setHasUnsavedChanges(true);
   };
 
-  const generateNoteId = (): string => {
-    return `note_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const handleTitleChange = (newTitle: string) => {
+    setNoteTitle(newTitle);
+    setHasUnsavedChanges(true);
   };
 
-  const extractTitle = (content: string): string => {
+  const sanitizeFilename = (title: string): string => {
+    // Remove or replace invalid characters for filesystem
+    return title
+      .replace(/[<>:"/\\|?*]/g, '') // Remove invalid characters
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .replace(/\.+$/, '') // Remove trailing dots
+      .substring(0, 100) // Limit length
+      .trim() || 'untitled'; // Fallback if empty
+  };
+
+  const extractTitleFromContent = (content: string): string => {
     const lines = content.split('\n');
     const firstLine = lines[0] || '';
     return firstLine.replace(/^#\s*/, '') || 'Untitled';
+  };
+
+  const generateFilename = (content: string): string => {
+    const title = extractTitleFromContent(content);
+    const sanitizedTitle = sanitizeFilename(title);
+    
+    // If still untitled, add timestamp to make it unique
+    if (sanitizedTitle === 'untitled') {
+      return `untitled_${Date.now()}`;
+    }
+    
+    return sanitizedTitle;
+  };
+
+  const generateUniqueFilename = async (baseTitle: string, currentFilename?: string): Promise<string> => {
+    const sanitizedTitle = sanitizeFilename(baseTitle || 'Untitled');
+    
+    // If we're editing and the title hasn't changed significantly, keep the same filename
+    if (currentFilename && sanitizeFilename(formatFilenameAsTitle(currentFilename)) === sanitizedTitle) {
+      return currentFilename;
+    }
+    
+    let filename = sanitizedTitle;
+    let counter = 1;
+    
+    // Check if filename already exists and increment if needed
+    while (true) {
+      try {
+        const existingNote = await fileSystemService.getNote(filename);
+        if (!existingNote || filename === currentFilename) {
+          break; // Filename is available or it's the current file
+        }
+        filename = `${sanitizedTitle}_${counter}`;
+        counter++;
+      } catch (error) {
+        // Note doesn't exist, filename is available
+        break;
+      }
+    }
+    
+    return filename;
+  };
+
+  const formatFilenameAsTitle = (filename: string): string => {
+    // Convert filename to display title
+    return filename
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
   };
 
   const saveNote = async (): Promise<boolean> => {
@@ -95,12 +158,11 @@ export default function EditorScreen() {
 
     setIsLoading(true);
     try {
-      const title = extractTitle(content);
+      const filename = await generateUniqueFilename(noteTitle, note?.filename);
       const now = new Date();
       
       const noteToSave: Note = {
-        id: note?.id || generateNoteId(),
-        title,
+        filename,
         content,
         createdAt: note?.createdAt || now,
         updatedAt: now,
@@ -126,7 +188,7 @@ export default function EditorScreen() {
     
     Alert.alert(
       'Delete Note',
-      `Are you sure you want to delete "${note.title}"? This action cannot be undone.`,
+      `Are you sure you want to delete "${formatFilenameAsTitle(note.filename)}"? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -142,7 +204,7 @@ export default function EditorScreen() {
     if (!note) return;
     
     try {
-      await fileSystemService.deleteNote(note.id);
+      await fileSystemService.deleteNote(note.filename);
       router.replace('/');
     } catch (error) {
       console.error('Error deleting note:', error);
@@ -215,6 +277,16 @@ export default function EditorScreen() {
             <Trash2 size={24} color="#ef4444" />
           </TouchableOpacity>
         )}
+      </View>
+
+      <View style={styles.titleContainer}>
+        <TextInput
+          style={styles.titleInput}
+          value={noteTitle}
+          onChangeText={handleTitleChange}
+          placeholder="Note title..."
+          placeholderTextColor="#9ca3af"
+        />
       </View>
 
       <MarkdownEditor
@@ -293,5 +365,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#f59e0b',
     fontWeight: '500',
+  },
+  titleContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  titleInput: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    paddingVertical: 8,
   },
 });

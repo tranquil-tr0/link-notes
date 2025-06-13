@@ -1,6 +1,5 @@
 export interface Note {
-  id: string;
-  title: string;
+  filename: string;
   content: string;
   createdAt: Date;
   updatedAt: Date;
@@ -8,8 +7,7 @@ export interface Note {
 }
 
 export interface NotePreview {
-  id: string;
-  title: string;
+  filename: string;
   preview: string;
   createdAt: Date;
   updatedAt: Date;

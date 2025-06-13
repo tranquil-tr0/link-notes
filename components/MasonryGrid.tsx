@@ -37,7 +37,7 @@ export default function MasonryGrid({ notes, onNotePress, onNoteLongPress }: Mas
         <View style={styles.column}>
           {columns.leftColumn.map((note) => (
             <NoteCard
-              key={note.id}
+              key={note.filename}
               note={note}
               onPress={onNotePress}
               onLongPress={onNoteLongPress}
@@ -48,7 +48,7 @@ export default function MasonryGrid({ notes, onNotePress, onNoteLongPress }: Mas
         <View style={styles.column}>
           {columns.rightColumn.map((note) => (
             <NoteCard
-              key={note.id}
+              key={note.filename}
               note={note}
               onPress={onNotePress}
               onLongPress={onNoteLongPress}

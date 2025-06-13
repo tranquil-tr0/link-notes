@@ -73,11 +73,11 @@ export default function MarkdownEditor({
       marginBottom: 12,
     },
     strong: {
-      fontWeight: '700',
+      fontWeight: '700' as const,
       color: '#1f2937',
     },
     em: {
-      fontStyle: 'italic',
+      fontStyle: 'italic' as const,
       color: '#374151',
     },
     code_inline: {

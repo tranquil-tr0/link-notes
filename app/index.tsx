@@ -45,14 +45,22 @@ export default function HomeScreen() {
     }, [])
   );
 
+  const formatFilenameAsTitle = (filename: string): string => {
+    // Convert filename to display title
+    return filename
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
+  };
+
   useEffect(() => {
     if (searchQuery.trim() === '') {
       setFilteredNotes(notes);
     } else {
-      const filtered = notes.filter(note =>
-        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.preview.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      const filtered = notes.filter(note => {
+        const title = formatFilenameAsTitle(note.filename);
+        return title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               note.preview.toLowerCase().includes(searchQuery.toLowerCase());
+      });
       setFilteredNotes(filtered);
     }
   }, [searchQuery, notes]);
@@ -69,7 +77,7 @@ export default function HomeScreen() {
       pathname: '/editor',
       params: { 
         mode: 'edit',
-        noteId: note.id
+        noteId: note.filename
       }
     });
   };
@@ -77,7 +85,7 @@ export default function HomeScreen() {
   const handleNoteLongPress = (note: NotePreview) => {
     Alert.alert(
       'Note Options',
-      `What would you like to do with "${note.title}"?`,
+      `What would you like to do with "${formatFilenameAsTitle(note.filename)}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
@@ -96,13 +104,13 @@ export default function HomeScreen() {
   const confirmDelete = (note: NotePreview) => {
     Alert.alert(
       'Delete Note',
-      `Are you sure you want to delete "${note.title}"? This action cannot be undone.`,
+      `Are you sure you want to delete "${formatFilenameAsTitle(note.filename)}"? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         { 
           text: 'Delete', 
           style: 'destructive',
-          onPress: () => deleteNote(note.id) 
+          onPress: () => deleteNote(note.filename)
         },
       ]
     );

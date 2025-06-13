@@ -127,7 +127,7 @@ export default function SettingsScreen() {
     try {
       const notes = await fileSystemService.getAllNotes();
       for (const note of notes) {
-        await fileSystemService.deleteNote(note.id);
+        await fileSystemService.deleteNote(note.filename);
       }
       setNotesCount(0);
       Alert.alert('Success', 'All notes have been deleted');
