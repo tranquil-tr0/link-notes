@@ -218,16 +218,15 @@ export default function HomeScreen() {
           </View>
         ) : (
           <MasonryGrid
-            items={filteredNotes.map(note => ({
-              id: note.filename,
-              component: (
-                <NoteCard
-                  note={note}
-                  onPress={handleNotePress}
-                  onLongPress={handleNoteLongPress}
-                />
-              )
-            }))}
+            items={filteredNotes.map(note => (
+              <NoteCard
+                name={note.filename}
+                note={note}
+                onPress={handleNotePress}
+                onLongPress={handleNoteLongPress}
+                showTimestamp={showTimestamp}
+              />
+            ))}
             numColumns={2}
             spacing={16}
           />

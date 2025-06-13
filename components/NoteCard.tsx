@@ -25,10 +25,6 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
     return date.toLocaleDateString();
   };
 
-  // Calculate textbox dimensions - half screen width minus 3*margin
-  const { width: screenWidth } = Dimensions.get('window');
-  const textboxWidth = Math.floor((screenWidth / 2) - ((1.5 * SPACING.margin) + (2 * SPACING.padding)));
-
   return (
     <TouchableOpacity
       onPress={() => onPress(note)}
@@ -36,10 +32,10 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
       activeOpacity={0.7}
     >
       {/* Frame around text and timestamp */}
-      <View style={[styles.frame, { width: textboxWidth + 32 }]}>
+      <View style={styles.frame}>
         {/* TextInput */}
         <TextInput
-          style={[styles.textInput, { width: textboxWidth }]}
+          style={styles.textInput}
           value={note.preview || ''}
           multiline={true}
           numberOfLines={10}

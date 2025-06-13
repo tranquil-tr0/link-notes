@@ -1,79 +1,143 @@
-import React, { useMemo } from 'react';
-import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { SPACING, COLORS } from '../theme';
-
-interface MasonryItem {
-  id: string;
-  estimatedHeight?: number;
-  component: React.ReactElement;
-}
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, ScrollView, StyleSheet, Dimensions } from 'react-native';
 
 interface MasonryGridProps {
-  items: MasonryItem[];
+  items: React.ReactElement[];
   numColumns?: number;
   spacing?: number;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+interface ItemLayout {
+  index: number;
+  height: number;
+  component: React.ReactElement;
+}
 
 export default function MasonryGrid({
   items,
   numColumns = 2,
-  spacing = SPACING.padding
+  spacing = 0
 }: MasonryGridProps) {
-  
-  // Calculate column width based on screen width, number of columns, and spacing
-  const columnWidth = useMemo(() => {
-    const totalSpacing = spacing * (numColumns + 1); // spacing between columns + margins
-    return (screenWidth - totalSpacing) / numColumns;
-  }, [numColumns, spacing]);
+  const [itemLayouts, setItemLayouts] = useState<ItemLayout[]>([]);
+  const [columns, setColumns] = useState<ItemLayout[][]>([]);
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
 
-  // Distribute items across columns using a simple height-based balancing algorithm
-  const columns = useMemo(() => {
-    const columnItems: MasonryItem[][] = Array(numColumns).fill(null).map(() => []);
-    const columnHeights: number[] = Array(numColumns).fill(0);
-    
-    items.forEach(item => {
-      // Find the column with the least total height
-      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
-      
-      // Add item to the shortest column
-      columnItems[shortestColumnIndex].push(item);
-      
-      // Update column height (use estimated height if provided, otherwise use default)
-      const estimatedHeight = item.estimatedHeight || 150; // default height fallback
-      columnHeights[shortestColumnIndex] += estimatedHeight + spacing;
+  // Update screen width on orientation change
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenWidth(window.width);
     });
-    
-    return columnItems;
-  }, [items, numColumns, spacing]);
+
+    return () => subscription?.remove();
+  }, []);
+
+  // Calculate column width
+  const columnWidth = screenWidth / numColumns;
+
+  // Handle layout measurement for each item
+  const handleItemLayout = useCallback((index: number, height: number) => {
+    setItemLayouts(prev => {
+      const existing = prev.find(item => item.index === index);
+      if (existing && existing.height === height) {
+        return prev; // No change needed
+      }
+
+      if (index >= items.length) return prev;
+
+      const newLayout: ItemLayout = {
+        index,
+        height,
+        component: items[index]
+      };
+
+      // Update or add the layout
+      const updated = prev.filter(item => item.index !== index);
+      return [...updated, newLayout];
+    });
+  }, [items]);
+
+  // Arrange items into columns when layouts change
+  useEffect(() => {
+    if (itemLayouts.length === 0) {
+      setColumns([]);
+      return;
+    }
+
+    // Initialize columns
+    const newColumns: ItemLayout[][] = Array(numColumns).fill(null).map(() => []);
+    const columnHeights: number[] = Array(numColumns).fill(0);
+
+    // Sort items by their original order (maintain the order from items array)
+    const sortedLayouts = items
+      .map((_, index) => itemLayouts.find(layout => layout.index === index))
+      .filter((layout): layout is ItemLayout => layout !== undefined);
+
+    // Place each item in the shortest column
+    sortedLayouts.forEach(layout => {
+      const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+      newColumns[shortestColumnIndex].push(layout);
+      columnHeights[shortestColumnIndex] += layout.height;
+    });
+
+    setColumns(newColumns);
+  }, [itemLayouts, items, numColumns, spacing]);
+
+  // Wrapper component to measure item height
+  const MeasurableItem = ({ component, index }: { component: React.ReactElement; index: number }) => (
+    <View
+      onLayout={(event) => {
+        const { height } = event.nativeEvent.layout;
+        handleItemLayout(index, height);
+      }}
+      style={{ width: columnWidth }}
+    >
+      {component}
+    </View>
+  );
 
   return (
     <ScrollView
       style={styles.container}
-      contentContainerStyle={[styles.contentContainer, { paddingHorizontal: spacing }]}
+      contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
-      <View style={[styles.grid, { gap: spacing }]}>
-        {columns.map((columnItems, columnIndex) => (
-          <View
-            key={columnIndex}
-            style={[styles.column, { width: columnWidth }]}
-          >
-            {columnItems.map((item, itemIndex) => (
-              <View
-                key={item.id}
-                style={[
-                  styles.itemContainer,
-                  { marginBottom: itemIndex < columnItems.length - 1 ? spacing : 0 }
-                ]}
-              >
-                {item.component}
-              </View>
-            ))}
-          </View>
+      {/* Render invisible items for measurement */}
+      <View style={styles.measurementContainer}>
+        {items.map((component, index) => (
+          <MeasurableItem 
+            name={`measure-${index}`} 
+            component={component} 
+            index={index}
+          />
         ))}
       </View>
+
+      {/* Render visible columns */}
+      {columns.length > 0 && (
+        <View style={styles.columnsContainer}>
+          {columns.map((column, columnIndex) => (
+            <View
+              name={columnIndex}
+              style={[
+                styles.column,
+                { 
+                  width: columnWidth,
+                  marginLeft: 0
+                }
+              ]}
+            >
+              {column.map(layout => (
+                <View
+                  name={layout.index}
+                  style={{}}
+                >
+                  {layout.component}
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -81,19 +145,21 @@ export default function MasonryGrid({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   contentContainer: {
-    paddingBottom: SPACING.bottom,
+    paddingVertical: 0,
   },
-  grid: {
+  measurementContainer: {
+    position: 'absolute',
+    left: -9999, // Move off-screen for measurement
+    top: 0,
+    opacity: 0,
+  },
+  columnsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   column: {
-    flexDirection: 'column',
-  },
-  itemContainer: {
-    width: '100%',
+    flex: 0,
   },
 });
