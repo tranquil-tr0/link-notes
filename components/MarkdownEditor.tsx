@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform, KeyboardAvoidingView } from 'react-native';
 import { MarkdownTextInput, type MarkdownRange } from '@expensify/react-native-live-markdown';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface MarkdownEditorProps {
   value: string;
@@ -299,8 +300,14 @@ export default function MarkdownEditor({
   onSave,
   placeholder = 'Start typing your note...',
 }: MarkdownEditorProps) {
+  const insets = useSafeAreaInsets();
+  
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={0}
+    >
       <View style={styles.toolbar}>
         <TouchableOpacity
           style={[styles.toolbarButton, styles.saveButton]}
@@ -321,7 +328,7 @@ export default function MarkdownEditor({
         autoFocus
         textAlignVertical="top"
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -337,7 +344,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
+    borderBottomWidth: 0,
     borderBottomColor: '#e5e7eb',
   },
   toolbarButton: {
@@ -362,9 +369,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#1f2937',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    minHeight: height - 200,
     textAlignVertical: 'top',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 0,
     flex: 1,
   },
 });
