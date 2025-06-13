@@ -16,3 +16,4 @@
 - replace initial "no notes" with loading screen instead
 - decrease side margins
 - local image embed is broken
+- notes editor does not consider keyboard
