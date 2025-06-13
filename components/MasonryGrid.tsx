@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { SPACING } from '../theme';
 
 interface MasonryGridProps {
   items: React.ReactElement[];
@@ -31,8 +32,11 @@ export default function MasonryGrid({
     return () => subscription?.remove();
   }, []);
 
-  // Calculate column width
-  const columnWidth = screenWidth / numColumns;
+  // Calculate column width accounting for horizontal margins
+  // Total horizontal space needed: left margin + (numColumns-1) * between margins + right margin
+  const totalHorizontalMargins = SPACING.margin * (numColumns + 1);
+  const availableWidth = screenWidth - totalHorizontalMargins;
+  const columnWidth = availableWidth / numColumns;
 
   // Handle layout measurement for each item
   const handleItemLayout = useCallback((index: number, height: number) => {
@@ -104,9 +108,9 @@ export default function MasonryGrid({
       {/* Render invisible items for measurement */}
       <View style={styles.measurementContainer}>
         {items.map((component, index) => (
-          <MeasurableItem 
-            name={`measure-${index}`} 
-            component={component} 
+          <MeasurableItem
+            key={`measure-${index}`}
+            component={component}
             index={index}
           />
         ))}
@@ -117,19 +121,19 @@ export default function MasonryGrid({
         <View style={styles.columnsContainer}>
           {columns.map((column, columnIndex) => (
             <View
-              name={columnIndex}
+              key={columnIndex}
               style={[
                 styles.column,
-                { 
+                {
                   width: columnWidth,
-                  marginLeft: 0
+                  marginLeft: SPACING.margin
                 }
               ]}
             >
               {column.map(layout => (
                 <View
-                  name={layout.index}
-                  style={{}}
+                  key={layout.index}
+                  style={{ marginBottom: spacing }}
                 >
                   {layout.component}
                 </View>
@@ -158,6 +162,7 @@ const styles = StyleSheet.create({
   columnsContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    paddingRight: SPACING.margin, // Add right margin
   },
   column: {
     flex: 0,
