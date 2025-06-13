@@ -68,23 +68,24 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
         </Text>
         
         {note.preview && (
-          <Text
-            style={[styles.preview, !showTimestamp && styles.previewExpanded]}
-            numberOfLines={showTimestamp ? 4 : 8}
-          >
-            {showTimestamp
-              ? note.preview.slice(0, 200)
-              : note.preview.slice(0, 350)}
-          </Text>
-        )}
-        
-        {showTimestamp && (
-          <View style={styles.footer}>
-            <View style={styles.dateContainer}>
-              <Clock size={12} color="#6b7280" />
-              <Text style={styles.date}>{formatDate(note.updatedAt)}</Text>
-            </View>
-          </View>
+          <>
+            <Text
+              style={[styles.preview, !showTimestamp && styles.previewExpanded]}
+              numberOfLines={showTimestamp ? 4 : 8}
+            >
+              {showTimestamp
+                ? note.preview.slice(0, 200)
+                : note.preview.slice(0, 350)}
+            </Text>
+            {showTimestamp && (
+              <View style={styles.footer}>
+                <View style={styles.dateContainer}>
+                  <Clock size={12} color="#6b7280" />
+                  <Text style={styles.date}>{formatDate(note.updatedAt)}</Text>
+                </View>
+              </View>
+            )}
+          </>
         )}
       </View>
     </TouchableOpacity>
@@ -129,8 +130,9 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   footer: {
-    marginTop: 12,
-    paddingTop: 8,
+    marginTop: 0,
+    paddingTop: 4,
+    marginBottom: -8,
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
   },
