@@ -109,7 +109,7 @@ export default function MasonryGrid({
       <View style={styles.measurementContainer}>
         {items.map((component, index) => (
           <MeasurableItem
-            key={`measure-${index}`}
+            {...({key: `measure-${index}`} as any)}
             component={component}
             index={index}
           />
@@ -121,7 +121,7 @@ export default function MasonryGrid({
         <View style={styles.columnsContainer}>
           {columns.map((column, columnIndex) => (
             <View
-              key={columnIndex}
+              {...({key: columnIndex} as any)}
               style={[
                 styles.column,
                 {
@@ -132,7 +132,7 @@ export default function MasonryGrid({
             >
               {column.map(layout => (
                 <View
-                  key={layout.index}
+                  {...({key: layout.index} as any)}
                   style={{ marginBottom: spacing }}
                 >
                   {layout.component}
