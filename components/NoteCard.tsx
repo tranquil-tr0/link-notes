@@ -34,7 +34,7 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
   };
 
   // Margin to add around the text box inside the card
-  const CARD_MARGIN = 12;
+  const CARD_MARGIN = 0;
 
   // Deterministically calculate textbox size based on content length and bounded width
   function calcTextBoxSize(content: string) {

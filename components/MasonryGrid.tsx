@@ -14,7 +14,7 @@ const { width } = Dimensions.get('window');
 
 export default function MasonryGrid({ notes, onNotePress, onNoteLongPress, showTimestamp = true }: MasonryGridProps) {
   // Margin must match NoteCard's CARD_MARGIN
-  const CARD_MARGIN = 12;
+  const CARD_MARGIN = 0;
 
   // Deterministically calculate textbox size based on content length
   function calcTextBoxSize(content: string) {
