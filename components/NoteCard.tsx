@@ -33,9 +33,8 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
   };
 
   const getPreviewHeight = (): number => {
-    // If timestamp is hidden, use extra space for preview and allow more text
-    const baseHeight = showTimestamp ? 120 : 160;
-    // Show more characters when timestamp is off
+    // Use the same base height regardless of timestamp visibility
+    const baseHeight = 100;
     const maxPreviewChars = showTimestamp ? 200 : 350;
     const contentLength = Math.min(note.preview.length, maxPreviewChars);
     const additionalHeight = Math.min(contentLength / 3, showTimestamp ? 80 : 140);
