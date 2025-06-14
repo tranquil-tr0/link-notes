@@ -12,15 +12,13 @@
       "supportsTablet": true,
       "infoPlist": {
         "UIViewControllerBasedStatusBarAppearance": false
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "statusBarStyle": "dark",
       "package": "com.anonymous.linknotes",
       "edgeToEdgeEnabled": true,
       "permissions": [
