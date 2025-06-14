@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Sun, Moon, Monitor } from 'lucide-react-native';
+import { useTheme, Theme } from '../components/ThemeProvider';
 import { 
   View, 
   Text, 
@@ -26,6 +28,39 @@ import { router } from 'expo-router';
 import { FileSystemService } from '@/services/FileSystemService';
 
 export default function SettingsScreen() {
+  const { theme, setTheme } = useTheme();
+  const themeOptions: { label: string; value: Theme; icon: React.ReactNode }[] = [
+    { label: 'Light', value: 'light', icon: <Sun size={20} color="#fbbf24" /> },
+    { label: 'Dark', value: 'dark', icon: <Moon size={20} color="#6366f1" /> },
+    { label: 'System', value: 'system', icon: <Monitor size={20} color="#6b7280" /> },
+  ];
+
+  const ThemeSelector = () => (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 20, marginBottom: 8 }}>
+      {themeOptions.map(opt => (
+        <TouchableOpacity
+          key={opt.value}
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: theme === opt.value ? '#e0e7ff' : '#fff',
+            borderColor: theme === opt.value ? '#6366f1' : '#e5e7eb',
+            borderWidth: 2,
+            borderRadius: 12,
+            marginHorizontal: 4,
+            paddingVertical: 12,
+          }}
+          onPress={() => setTheme(opt.value)}
+          activeOpacity={0.8}
+        >
+          {opt.icon}
+          <Text style={{ marginLeft: 8, color: '#1f2937', fontWeight: theme === opt.value ? '700' : '500' }}>{opt.label}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
   const [notesCount, setNotesCount] = useState<number>(0);
   const [storageLocation, setStorageLocation] = useState<string>('');
   const [showTimestamps, setShowTimestamps] = useState<boolean>(true);
@@ -278,7 +313,8 @@ export default function SettingsScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Display</Text>
-          
+          <Text style={{ marginHorizontal: 20, marginBottom: 8, color: '#6b7280', fontSize: 15 }}>App Theme</Text>
+          <ThemeSelector />
           <SettingItem
             icon={<Clock size={22} color="#6b7280" />}
             title="Show Timestamps"
