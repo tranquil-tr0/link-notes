@@ -18,7 +18,7 @@ export default function RootLayout() {
           <Stack.Screen name="settings" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
-        <StatusBar style="auto" translucent={false} />
+        <StatusBar style="dark" /> // TODO: update with app theme
       </SafeAreaProvider>
     </KeyboardProvider>
   );
