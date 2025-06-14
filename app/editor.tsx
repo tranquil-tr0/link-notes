@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Trash2, Save } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '@/components/ThemeProvider';
 import {
   KeyboardAwareScrollView,
   useKeyboardAnimation,
@@ -34,6 +35,7 @@ export default function EditorScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const fileSystemService = FileSystemService.getInstance();
 
@@ -265,15 +267,25 @@ export default function EditorScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleBackPress} style={styles.iconButton}>
-          <ArrowLeft size={24} color="#333" />
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={handleBackPress} style={[styles.iconButton, { backgroundColor: colors.overlay }]}>
+          <ArrowLeft size={24} color={colors.iris} />
         </TouchableOpacity>
-        <View style={styles.headerRightActions}>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={saveNote}
+            style={[styles.iconButton, { backgroundColor: colors.overlay }]}
+            disabled={isLoading}
+          >
+            <Save size={24} color={colors.pine} />
+          </TouchableOpacity>
           {mode === 'edit' && note && (
-            <TouchableOpacity onPress={handleDelete} style={styles.iconButton}>
-              <Trash2 size={24} color="#FF3B30" />
+            <TouchableOpacity
+              onPress={handleDelete}
+              style={[styles.iconButton, styles.deleteButtonHeader, { backgroundColor: colors.overlay }]}
+            >
+              <Trash2 size={24} color={colors.love} />
             </TouchableOpacity>
           )}
         </View>
@@ -285,11 +297,11 @@ export default function EditorScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <TextInput
-          style={styles.titleInput}
-          placeholder="Note Title"
+          style={[styles.titleInput, { backgroundColor: colors.background, color: colors.text, borderBottomColor: colors.border }]}
+          placeholder="Untitled"
           value={noteTitle}
           onChangeText={handleTitleChange}
-          placeholderTextColor="#999"
+          placeholderTextColor={colors.textMuted}
         />
         <View style={styles.editorContainer}>
           <MarkdownEditor
@@ -339,6 +351,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  deleteButtonHeader: {
+    marginLeft: 8,
   },
   headerRightActions: {
     flexDirection: 'row',

@@ -373,15 +373,6 @@ export default function MarkdownEditor({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.toolbar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <TouchableOpacity
-          style={[styles.toolbarButton, { backgroundColor: colors.foam }]}
-          onPress={onSave}
-          activeOpacity={0.7}
-        >
-          <Text style={[styles.saveButtonText, { color: colors.text }]}>Save</Text>
-        </TouchableOpacity>
-      </View>
       <MarkdownTextInput
         value={value}
         onChangeText={onChangeText}
