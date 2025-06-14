@@ -281,6 +281,7 @@ export default function EditorScreen() {
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1 }}
+        bottomOffset={50}
         keyboardShouldPersistTaps="handled"
       >
         <TextInput
