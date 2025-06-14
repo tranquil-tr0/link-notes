@@ -323,7 +323,7 @@ export default function MarkdownEditor({
         multiline={true}
         autoFocus
         textAlignVertical="top"
-        scrollEnabled={true}
+        scrollEnabled={false}
         onFocus={() => {
           console.log('DEBUG: MarkdownTextInput focused');
         }}
