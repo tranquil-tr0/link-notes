@@ -323,7 +323,13 @@ export default function MarkdownEditor({
         multiline={true}
         autoFocus
         textAlignVertical="top"
-        scrollEnabled={true}
+        scrollEnabled={false}
+        onFocus={() => {
+          console.log('DEBUG: MarkdownTextInput focused');
+        }}
+        onScroll={(event) => {
+          console.log('DEBUG: MarkdownTextInput scroll - contentOffset:', event.nativeEvent.contentOffset);
+        }}
       />
     </View>
   );

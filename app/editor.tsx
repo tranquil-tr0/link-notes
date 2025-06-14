@@ -9,16 +9,18 @@ import {
   TextInput,
   BackHandler,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Trash2 } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  KeyboardAwareScrollView,
   useKeyboardAnimation,
   KeyboardController,
-  AndroidSoftInputModes
+  AndroidSoftInputModes,
+  useKeyboardHandler,
+  KeyboardAvoidingView
 } from 'react-native-keyboard-controller';
 import MarkdownEditor from '@/components/MarkdownEditor';
 import { Note } from '@/types/Note';
@@ -36,6 +38,22 @@ export default function EditorScreen() {
   const insets = useSafeAreaInsets();
 
   const fileSystemService = FileSystemService.getInstance();
+
+  // Debug: Add keyboard event logging
+  useKeyboardHandler({
+    onStart: (e) => {
+      'worklet';
+      console.log('DEBUG: Keyboard start - height:', e.height, 'progress:', e.progress);
+    },
+    onMove: (e) => {
+      'worklet';
+      console.log('DEBUG: Keyboard move - height:', e.height, 'progress:', e.progress);
+    },
+    onEnd: (e) => {
+      'worklet';
+      console.log('DEBUG: Keyboard end - height:', e.height, 'progress:', e.progress);
+    },
+  }, []);
 
   useEffect(() => {
     if (mode === 'edit' && noteId) {
@@ -278,27 +296,37 @@ export default function EditorScreen() {
           )}
         </View>
       </View>
-      <KeyboardAwareScrollView
+      <KeyboardAvoidingView
         style={{ flex: 1 }}
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
       >
-        <TextInput
-          style={styles.titleInput}
-          placeholder="Note Title"
-          value={noteTitle}
-          onChangeText={handleTitleChange}
-          placeholderTextColor="#999"
-        />
-        <View style={styles.editorContainer}>
-          <MarkdownEditor
-            value={content}
-            onChangeText={handleContentChange}
-            onSave={saveNote}
-            placeholder="Start typing your note..."
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          onScroll={(event: any) => {
+            console.log('DEBUG: ScrollView scroll - contentOffset:', event.nativeEvent.contentOffset);
+          }}
+          scrollEventThrottle={16}
+        >
+          <TextInput
+            style={styles.titleInput}
+            placeholder="Note Title"
+            value={noteTitle}
+            onChangeText={handleTitleChange}
+            placeholderTextColor="#999"
           />
-        </View>
-      </KeyboardAwareScrollView>
+          <View style={styles.editorContainer}>
+            <MarkdownEditor
+              value={content}
+              onChangeText={handleContentChange}
+              onSave={saveNote}
+              placeholder="Start typing your note..."
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
