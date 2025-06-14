@@ -14,7 +14,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Trash2 } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import {
+  KeyboardAwareScrollView,
+  useKeyboardAnimation,
+  KeyboardController,
+  AndroidSoftInputModes
+} from 'react-native-keyboard-controller';
 import MarkdownEditor from '@/components/MarkdownEditor';
 import { Note } from '@/types/Note';
 import { FileSystemService } from '@/services/FileSystemService';
@@ -43,9 +48,16 @@ export default function EditorScreen() {
     }
   }, [mode, noteId]);
 
-  // Handle hardware back button on Android
+  // Handle hardware back button on Android and keyboard settings
   useFocusEffect(
     useCallback(() => {
+      // Set proper keyboard mode for this screen
+      if (Platform.OS === 'android') {
+        KeyboardController.setInputMode(
+          AndroidSoftInputModes.SOFT_INPUT_ADJUST_RESIZE
+        );
+      }
+
       const onBackPress = () => {
         handleBackPress();
         return true; // Prevent default behavior
@@ -53,7 +65,13 @@ export default function EditorScreen() {
 
       const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
 
-      return () => subscription.remove();
+      return () => {
+        subscription.remove();
+        // Restore default keyboard mode when leaving
+        if (Platform.OS === 'android') {
+          KeyboardController.setDefaultMode();
+        }
+      };
     }, [hasUnsavedChanges, content])
   );
 
@@ -263,6 +281,8 @@ export default function EditorScreen() {
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1 }}
+        bottomOffset={50}
+        keyboardShouldPersistTaps="handled"
       >
         <TextInput
           style={styles.titleInput}

@@ -318,11 +318,12 @@ export default function MarkdownEditor({
         onChangeText={onChangeText}
         parser={parseObsidianMarkdown}
         placeholder={placeholder}
-        style={[styles.textInput, { paddingBottom: insets.bottom }]}
+        style={[styles.textInput, { paddingBottom: insets.bottom + 20 }]}
         markdownStyle={markdownStyle}
         multiline
         autoFocus
         textAlignVertical="top"
+        scrollEnabled={false}
       />
     </View>
   );
