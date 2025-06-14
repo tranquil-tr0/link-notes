@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { NotePreview } from '@/types/Note';
 import { Clock } from 'lucide-react-native';
-import { COLORS, RADIUS, SPACING } from '../theme';
+import { RADIUS, SPACING } from '../theme';
+import { useTheme } from './ThemeProvider';
 
 interface NoteCardProps {
   note: NotePreview;
@@ -13,6 +14,7 @@ interface NoteCardProps {
 }
 
 export default function NoteCard({ note, onPress, onLongPress, showTimestamp = true }: NoteCardProps) {
+  const { colors } = useTheme();
   const truncateText = (text: string, maxLines: number = 10) => {
     if (!text) return '';
     
@@ -65,22 +67,28 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
       activeOpacity={0.7}
     >
       {/* Frame around text and timestamp */}
-      <View style={styles.frame}>
+      <View style={[styles.frame, {
+        backgroundColor: colors.surface,
+        borderColor: colors.border
+      }]}>
         {/* Title */}
-        <Text style={styles.title} numberOfLines={1}>
+        <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
           {note.filename.replace(/\.md$/, '')}
         </Text>
         
         {/* Text Display */}
-        <Text style={styles.textDisplay} numberOfLines={10}>
+        <Text style={[styles.textDisplay, {
+          backgroundColor: colors.overlay,
+          color: colors.text
+        }]} numberOfLines={10}>
           {truncateText(note.preview || '')}
         </Text>
         
         {/* Timestamp */}
         {showTimestamp && (
-          <View style={styles.timestamp}>
-            <Clock size={12} color="#6b7280" />
-            <Text style={styles.timestampText}>
+          <View style={[styles.timestamp, { borderTopColor: colors.border }]}>
+            <Clock size={12} color={colors.textMuted} />
+            <Text style={[styles.timestampText, { color: colors.textMuted }]}>
               {formatDate(note.updatedAt)}
             </Text>
           </View>
@@ -92,10 +100,8 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
 
 const styles = StyleSheet.create({
   frame: {
-    backgroundColor: COLORS.elementbackground,
     borderRadius: RADIUS.large,
     borderWidth: 1,
-    borderColor: COLORS.outline,
     padding: SPACING.padding,
     // shadowColor: COLORS.shadow,
     // shadowOffset: {
@@ -109,15 +115,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.text,
     marginBottom: SPACING.smallMargin,
     paddingHorizontal: 4,
   },
   textDisplay: {
-    backgroundColor: COLORS.elementbackground,
     borderRadius: RADIUS.small,
     fontSize: 14,
-    color: COLORS.text,
     lineHeight: 20,
     fontFamily: 'monospace',
     padding: SPACING.padding,
@@ -128,11 +131,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingTop: 0,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
   },
   timestampText: {
     fontSize: 12,
-    color: '#6b7280',
     marginLeft: 4,
   },
 });

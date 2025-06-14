@@ -5,13 +5,13 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { StyleSheet } from 'react-native';
-import { ThemeProvider } from '../components/ThemeProvider';
+import { ThemeProvider, useTheme } from '../components/ThemeProvider';
 
-export default function RootLayout() {
-  useFrameworkReady();
+function AppContent() {
+  const { isDark } = useTheme();
 
   return (
-    <ThemeProvider>
+    <>
       <KeyboardProvider>
         <SafeAreaProvider>
           <Stack screenOptions={{ headerShown: false }}>
@@ -20,9 +20,19 @@ export default function RootLayout() {
             <Stack.Screen name="settings" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
           </Stack>
-          <StatusBar style="dark" />
+          <StatusBar style={isDark ? "light" : "dark"} />
         </SafeAreaProvider>
       </KeyboardProvider>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  useFrameworkReady();
+
+  return (
+    <ThemeProvider>
+      <AppContent />
     </ThemeProvider>
   );
 }

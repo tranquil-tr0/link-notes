@@ -28,36 +28,39 @@ import { router } from 'expo-router';
 import { FileSystemService } from '@/services/FileSystemService';
 
 export default function SettingsScreen() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, colors } = useTheme();
   const themeOptions: { label: string; value: Theme; icon: React.ReactNode }[] = [
-    { label: 'Light', value: 'light', icon: <Sun size={20} color="#fbbf24" /> },
-    { label: 'Dark', value: 'dark', icon: <Moon size={20} color="#6366f1" /> },
-    { label: 'System', value: 'system', icon: <Monitor size={20} color="#6b7280" /> },
+    { label: 'Rose Pine', value: 'rosePine', icon: <Moon size={20} color="#c4a7e7" /> },
+    { label: 'Rose Pine Moon', value: 'rosePineMoon', icon: <Moon size={20} color="#ea9a97" /> },
+    { label: 'Rose Pine Dawn', value: 'rosePineDawn', icon: <Sun size={20} color="#ea9d34" /> },
+    { label: 'System', value: 'system', icon: <Monitor size={20} color={colors.textMuted} /> },
   ];
 
   const ThemeSelector = () => (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 20, marginBottom: 8 }}>
-      {themeOptions.map(opt => (
-        <TouchableOpacity
-          key={opt.value}
-          style={{
-            flex: 1,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: theme === opt.value ? '#e0e7ff' : '#fff',
-            borderColor: theme === opt.value ? '#6366f1' : '#e5e7eb',
-            borderWidth: 2,
-            borderRadius: 12,
-            marginHorizontal: 4,
-            paddingVertical: 12,
-          }}
-          onPress={() => setTheme(opt.value)}
-          activeOpacity={0.8}
-        >
-          {opt.icon}
-          <Text style={{ marginLeft: 8, color: '#1f2937', fontWeight: theme === opt.value ? '700' : '500' }}>{opt.label}</Text>
-        </TouchableOpacity>
+      {themeOptions.map((opt, index) => (
+        // @ts-ignore: Allow key on View for list items
+        <View key={`${opt.value}-${index}`} style={{ flex: 1, marginHorizontal: 4 }}>
+          <TouchableOpacity
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: theme === opt.value ? colors.highlightMed : colors.surface,
+              borderColor: theme === opt.value ? colors.accent : colors.border,
+              borderWidth: 2,
+              borderRadius: 12,
+              paddingVertical: 12,
+            }}
+            onPress={() => setTheme(opt.value)}
+            activeOpacity={0.8}
+          >
+            {opt.icon}
+            <Text style={{ marginLeft: 8, color: colors.text, fontWeight: theme === opt.value ? '700' : '500' }}>
+              {opt.label}
+            </Text>
+          </TouchableOpacity>
+        </View>
       ))}
     </View>
   );
@@ -214,10 +217,18 @@ export default function SettingsScreen() {
     );
   };
 
-  const showAbout = () => {
+  const showRosePineLicense = () => {
     Alert.alert(
-      'About Notes App',
-      'A beautiful markdown notes app inspired by Google Keep and Obsidian.\n\nFeatures:\n• Masonry layout for notes\n• Live markdown preview\n• File system storage\n• Cross-platform support',
+      'Rose Pine Dawn Colorscheme License',
+      `MIT License
+
+  Copyright (c) 2023 Rosé Pine
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.`,
       [{ text: 'OK' }]
     );
   };
@@ -227,7 +238,7 @@ export default function SettingsScreen() {
     title,
     subtitle,
     onPress,
-    color = '#6b7280',
+    color = colors.textMuted,
     dangerous = false,
     showSwitch = false,
     switchValue = false,
@@ -244,7 +255,7 @@ export default function SettingsScreen() {
     onSwitchChange?: (value: boolean) => void;
   }) => (
     <TouchableOpacity
-      style={styles.settingItem}
+      style={[styles.settingItem, { backgroundColor: colors.surface }]}
       onPress={showSwitch ? undefined : onPress}
       activeOpacity={showSwitch ? 1 : 0.7}
     >
@@ -252,71 +263,71 @@ export default function SettingsScreen() {
         {icon}
       </View>
       <View style={styles.settingContent}>
-        <Text style={[styles.settingTitle, dangerous && styles.dangerousText]}>
+        <Text style={[styles.settingTitle, { color: dangerous ? colors.love : colors.text }]}>
           {title}
         </Text>
         {subtitle && (
-          <Text style={styles.settingSubtitle}>{subtitle}</Text>
+          <Text style={[styles.settingSubtitle, { color: colors.textMuted }]}>{subtitle}</Text>
         )}
       </View>
       {showSwitch && (
         <Switch
           value={switchValue}
           onValueChange={onSwitchChange}
-          trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
-          thumbColor={switchValue ? '#ffffff' : '#f3f4f6'}
+          trackColor={{ false: colors.border, true: colors.foam }}
+          thumbColor={switchValue ? colors.surface : colors.overlay}
         />
       )}
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
+    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: colors.overlay }]}
           onPress={handleBackPress}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color="#6b7280" />
+          <ArrowLeft size={24} color={colors.textMuted} />
         </TouchableOpacity>
-        <Text style={styles.title}>Settings</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Settings</Text>
         <View style={styles.placeholder} />
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Storage</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Storage</Text>
           
-          <View style={styles.statsCard}>
+          <View style={[styles.statsCard, { backgroundColor: colors.surface }]}>
             <View style={styles.statItem}>
-              <FileText size={28} color="#3b82f6" />
+              <FileText size={28} color={colors.foam} />
               <View style={styles.statContent}>
-                <Text style={styles.statValue}>{notesCount}</Text>
-                <Text style={styles.statLabel}>Total Notes</Text>
+                <Text style={[styles.statValue, { color: colors.text }]}>{notesCount}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Notes</Text>
               </View>
             </View>
             
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             
             <View style={styles.statItem}>
-              <HardDrive size={28} color="#10b981" />
+              <HardDrive size={28} color={colors.pine} />
               <View style={styles.statContent}>
-                <Text style={styles.statValue}>
+                <Text style={[styles.statValue, { color: colors.text }]}>
                   {Platform.OS === 'web' ? 'Browser' : 'Device'}
                 </Text>
-                <Text style={styles.statLabel}>Storage Location</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>Storage Location</Text>
               </View>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Display</Text>
-          <Text style={{ marginHorizontal: 20, marginBottom: 8, color: '#6b7280', fontSize: 15 }}>App Theme</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Display</Text>
+          <Text style={{ marginHorizontal: 20, marginBottom: 8, color: colors.textMuted, fontSize: 15 }}>App Theme</Text>
           <ThemeSelector />
           <SettingItem
-            icon={<Clock size={22} color="#6b7280" />}
+            icon={<Clock size={22} color={colors.textMuted} />}
             title="Show Timestamps"
             subtitle="Display timestamps at the bottom of notes"
             showSwitch={true}
@@ -326,24 +337,24 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Data Management</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Management</Text>
           
           <SettingItem
-            icon={<Folder size={22} color="#6b7280" />}
+            icon={<Folder size={22} color={colors.textMuted} />}
             title="Storage Location"
             subtitle={getStorageLocationText()}
             onPress={handleStorageLocationPress}
           />
           
           <SettingItem
-            icon={<Upload size={22} color="#6b7280" />}
+            icon={<Upload size={22} color={colors.textMuted} />}
             title="Export Notes"
             subtitle="Backup your notes"
             onPress={handleExportNotes}
           />
           
           <SettingItem
-            icon={<Download size={22} color="#6b7280" />}
+            icon={<Download size={22} color={colors.textMuted} />}
             title="Import Notes"
             subtitle="Import markdown files"
             onPress={handleImportNotes}
@@ -351,10 +362,10 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Danger Zone</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Danger Zone</Text>
           
           <SettingItem
-            icon={<Trash2 size={22} color="#ef4444" />}
+            icon={<Trash2 size={22} color={colors.love} />}
             title="Clear All Notes"
             subtitle="Delete all notes permanently"
             onPress={handleClearAllNotes}
@@ -363,13 +374,12 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
           <SettingItem
-            icon={<Info size={22} color="#6b7280" />}
-            title="About Notes App"
-            subtitle="Version 1.0.0"
-            onPress={showAbout}
+            icon={<Info size={22} color={colors.textMuted} />}
+            title="Rose Pine License"
+            subtitle="The Rose Pine series of themes are used in the app"
+            onPress={showRosePineLicense}
           />
         </View>
       </ScrollView>

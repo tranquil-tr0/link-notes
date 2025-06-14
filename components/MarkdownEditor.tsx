@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform } from 'react-native';
 import { MarkdownTextInput, type MarkdownRange } from '@expensify/react-native-live-markdown';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from './ThemeProvider';
 
 interface MarkdownEditorProps {
   value: string;
@@ -301,16 +302,84 @@ export default function MarkdownEditor({
   placeholder = 'Start typing your note...',
 }: MarkdownEditorProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+
+  // Dynamic markdown style based on theme
+  const dynamicMarkdownStyle = {
+    syntax: {
+      color: colors.textMuted,
+      opacity: 0.7,
+    },
+    link: {
+      color: colors.foam,
+      textDecorationLine: 'underline',
+    },
+    h1: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      color: colors.text,
+    },
+    emoji: {
+      fontSize: 20,
+    },
+    blockquote: {
+      borderColor: colors.border,
+      borderWidth: 4,
+      marginLeft: 8,
+      paddingLeft: 12,
+      fontStyle: 'italic',
+      color: colors.textMuted,
+    },
+    code: {
+      fontFamily: FONT_FAMILY_MONOSPACE,
+      fontSize: 14,
+      color: colors.love,
+      backgroundColor: colors.overlay,
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 3,
+    },
+    pre: {
+      fontFamily: FONT_FAMILY_MONOSPACE,
+      fontSize: 14,
+      color: colors.text,
+      backgroundColor: colors.overlay,
+      padding: 12,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    bold: {
+      fontWeight: 'bold',
+      color: colors.gold,
+      backgroundColor: colors.highlightLow,
+    },
+    italic: {
+      fontStyle: 'italic',
+    },
+    strikethrough: {
+      textDecorationLine: 'line-through',
+      color: colors.textMuted,
+    },
+    mentionHere: {
+      color: colors.pine,
+      backgroundColor: colors.highlightLow,
+    },
+    mentionUser: {
+      color: colors.iris,
+      backgroundColor: colors.highlightLow,
+    },
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.toolbar}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.toolbar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <TouchableOpacity
-          style={[styles.toolbarButton, styles.saveButton]}
+          style={[styles.toolbarButton, { backgroundColor: colors.foam }]}
           onPress={onSave}
           activeOpacity={0.7}
         >
-          <Text style={styles.saveButtonText}>Save</Text>
+          <Text style={[styles.saveButtonText, { color: colors.text }]}>Save</Text>
         </TouchableOpacity>
       </View>
       <MarkdownTextInput
@@ -318,8 +387,9 @@ export default function MarkdownEditor({
         onChangeText={onChangeText}
         parser={parseObsidianMarkdown}
         placeholder={placeholder}
-        style={[styles.textInput, { paddingBottom: insets.bottom + 20 }]}
-        markdownStyle={markdownStyle}
+        placeholderTextColor={colors.textMuted}
+        style={[styles.textInput, { paddingBottom: insets.bottom + 20, color: colors.text }]}
+        markdownStyle={dynamicMarkdownStyle}
         multiline
         autoFocus
         textAlignVertical="top"

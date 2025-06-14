@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  Text, 
-  TouchableOpacity, 
+import {
+  View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
   SafeAreaView,
   Alert,
   TextInput,
@@ -16,6 +16,7 @@ import MasonryGrid from '@/components/MasonryGrid';
 import NoteCard from '@/components/NoteCard';
 import { NotePreview } from '@/types/Note';
 import { FileSystemService } from '@/services/FileSystemService';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function HomeScreen() {
   const [notes, setNotes] = useState<NotePreview[]>([]);
@@ -25,6 +26,7 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [showTimestamp, setShowTimestamp] = useState(true);
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   const fileSystemService = FileSystemService.getInstance();
 
@@ -156,35 +158,35 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
+    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Notes</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Notes</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
-              style={styles.headerButton}
+              style={[styles.headerButton, { backgroundColor: colors.overlay }]}
               onPress={toggleSearch}
               activeOpacity={0.7}
             >
               {isSearchVisible ? (
-                <X size={24} color="#6b7280" />
+                <X size={24} color={colors.textMuted} />
               ) : (
-                <Search size={24} color="#6b7280" />
+                <Search size={24} color={colors.textMuted} />
               )}
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.headerButton}
+              style={[styles.headerButton, { backgroundColor: colors.overlay }]}
               onPress={handleSettingsPress}
               activeOpacity={0.7}
             >
-              <Settings size={24} color="#6b7280" />
+              <Settings size={24} color={colors.textMuted} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.headerButton, styles.createButton]}
+              style={[styles.headerButton, { backgroundColor: colors.foam }]}
               onPress={handleCreateNote}
               activeOpacity={0.7}
             >
-              <Plus size={24} color="#ffffff" />
+              <Plus size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -192,9 +194,13 @@ export default function HomeScreen() {
         {isSearchVisible && (
           <View style={styles.searchContainer}>
             <TextInput
-              style={styles.searchInput}
+              style={[styles.searchInput, {
+                backgroundColor: colors.overlay,
+                borderColor: colors.border,
+                color: colors.text
+              }]}
               placeholder="Search notes..."
-              placeholderTextColor="#9ca3af"
+              placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
               autoFocus
@@ -206,12 +212,12 @@ export default function HomeScreen() {
       <View style={styles.content}>
         {filteredNotes.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>
+            <Text style={[styles.emptyStateText, { color: colors.textMuted }]}>
               {searchQuery ? 'No notes found' : 'No notes yet'}
             </Text>
-            <Text style={styles.emptyStateSubtext}>
-              {searchQuery 
-                ? 'Try adjusting your search terms' 
+            <Text style={[styles.emptyStateSubtext, { color: colors.textMuted }]}>
+              {searchQuery
+                ? 'Try adjusting your search terms'
                 : 'Tap the + button to create your first note'
               }
             </Text>
