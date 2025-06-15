@@ -45,13 +45,6 @@ export default function FolderCard({ folder, onPress, onLongPress, showTimestamp
           </Text>
         </View>
         
-        {/* Folder indicator text */}
-        <View style={[styles.folderIndicator, { backgroundColor: colors.overlay }]}>
-          <Text style={[styles.folderIndicatorText, { color: colors.textMuted }]}>
-            Folder
-          </Text>
-        </View>
-        
         {/* Timestamp */}
         {showTimestamp && (
           <View style={[styles.timestamp, { borderTopColor: colors.border }]}>
@@ -70,7 +63,7 @@ const styles = StyleSheet.create({
   frame: {
     borderRadius: RADIUS.large,
     borderWidth: 1,
-    padding: SPACING.padding,
+    padding: SPACING.largePadding,
     shadowOffset: {
       width: 2,
       height: 2,
@@ -78,7 +71,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: RADIUS.large,
     elevation: 3,
-    minHeight: 120,
+    minHeight: 65,
   },
   folderHeader: {
     flexDirection: 'row',
