@@ -63,7 +63,7 @@ const ROSE_PINE_COLORS = {
     love: '#b4637a',
     gold: '#ea9d34',
     rose: '#d7827e',
-    accentRose: '#e8a3a0',
+    accentRose: '#ebbcba',
     pine: '#286983',
     foam: '#56949f',
     iris: '#907aa9',

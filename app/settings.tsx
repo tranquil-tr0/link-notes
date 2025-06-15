@@ -31,8 +31,8 @@ export default function SettingsScreen() {
   const { theme, setTheme, colors } = useTheme();
   const themeOptions: { label: string; value: Theme; icon: React.ReactNode }[] = [
     { label: 'Rose Pine', value: 'rosePine', icon: <Moon size={20} color="#c4a7e7" /> },
-    { label: 'Rose Pine Moon', value: 'rosePineMoon', icon: <Moon size={20} color="#ea9a97" /> },
-    { label: 'Rose Pine Dawn', value: 'rosePineDawn', icon: <Sun size={20} color="#ea9d34" /> },
+    { label: 'Moon', value: 'rosePineMoon', icon: <Moon size={20} color="#ea9a97" /> },
+    { label: 'Dawn', value: 'rosePineDawn', icon: <Sun size={20} color="#ea9d34" /> },
     { label: 'System', value: 'system', icon: <Monitor size={20} color={colors.textMuted} /> },
   ];
 
@@ -378,7 +378,7 @@ export default function SettingsScreen() {
           <SettingItem
             icon={<Info size={22} color={colors.textMuted} />}
             title="Rose Pine License"
-            subtitle="The Rose Pine series of themes are used in the app"
+            subtitle="A modified version of the Rose Pine series of themes are used in the app"
             onPress={showRosePineLicense}
           />
         </View>

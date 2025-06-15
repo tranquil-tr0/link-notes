@@ -48,17 +48,19 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
     
     return truncatedLines.join('\n');
   };
-  const formatDate = (date: Date): string => {
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) return 'Today';
-    if (diffDays === 2) return 'Yesterday';
-    if (diffDays <= 7) return `${diffDays} days ago`;
-    
-    return date.toLocaleDateString();
-  };
+  const formatDate = React.useMemo(() => {
+    return (date: Date): string => {
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 1) return 'Today';
+      if (diffDays === 2) return 'Yesterday';
+      if (diffDays <= 7) return `${diffDays} days ago`;
+      
+      return date.toLocaleDateString();
+    };
+  }, []); // Empty dependency array means it's calculated once per component instance
 
   return (
     <TouchableOpacity

@@ -107,17 +107,19 @@ export default function MasonryGrid({
     >
       {/* Render invisible items for measurement */}
       <View style={styles.measurementContainer}>
-        {items.map((item, idx) => React.cloneElement(
-          <MeasurableItem component={item} index={idx} />,
-          { key: `measure-${idx}` }
+        {items.map((item, idx) => (
+          // @ts-ignore: Allow key on View for list items
+          <MeasurableItem key={`measure-${idx}`} component={item} index={idx} />
         ))}
       </View>
 
       {/* Render visible columns */}
       {columns.length > 0 && (
         <View style={styles.columnsContainer}>
-          {columns.map((column, colIdx) => React.cloneElement(
+          {columns.map((column, colIdx) => (
             <View
+              // @ts-ignore: Allow key on View for list items
+              key={`column-${colIdx}`}
               style={[
                 styles.column,
                 {
@@ -126,19 +128,19 @@ export default function MasonryGrid({
                 }
               ]}
             >
-              {column.map((layout, itemIdx) => React.cloneElement(
+              {column.map((layout, itemIdx) => (
                 <View
+                  // @ts-ignore: Allow key on View for list items
+                  key={`item-${layout.index}`}
                   style={{
                     marginTop: itemIdx === 0 ? SPACING.margin : 0,
                     marginBottom: SPACING.margin
                   }}
                 >
-                  {layout.component}
-                </View>,
-                { key: `item-${layout.index}` }
+                  {items[layout.index]}
+                </View>
               ))}
-            </View>,
-            { key: `column-${colIdx}` }
+            </View>
           ))}
         </View>
       )}
