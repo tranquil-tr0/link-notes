@@ -63,7 +63,6 @@ const ROSE_PINE_COLORS = {
     love: '#b4637a',
     gold: '#ea9d34',
     rose: '#d7827e',
-    accentRose: '#ebbcba',
     pine: '#286983',
     foam: '#56949f',
     iris: '#907aa9',
@@ -161,7 +160,7 @@ export const THEMES = {
       textMuted: ROSE_PINE_COLORS.dawn.muted,
       
       // Interactive elements
-      accent: ROSE_PINE_COLORS.dawn.accentRose,
+      accent: ROSE_PINE_COLORS.dawn.rose,
       accentSecondary: ROSE_PINE_COLORS.dawn.iris,
       
       // Status colors
