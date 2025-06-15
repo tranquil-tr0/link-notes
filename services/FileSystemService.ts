@@ -125,7 +125,10 @@ export class FileSystemService {
   /**
    * Get storage location info for display
    */
-  getStorageLocationInfo(): { location: string; type: 'app' | 'public' | 'custom' } {
+  async getStorageLocationInfo(): Promise<{ location: string; type: 'app' | 'public' | 'custom' }> {
+    // Always ensure directory preference is loaded before getting location info
+    await this.loadDirectoryPreference();
+    
     const currentDir = this.getNotesDirectory();
     
     if (Platform.OS === 'web') {

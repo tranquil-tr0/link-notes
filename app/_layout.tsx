@@ -6,6 +6,7 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { StyleSheet } from 'react-native';
 import { ThemeProvider, useTheme } from '../components/ThemeProvider';
+import { FileSystemService } from '@/services/FileSystemService';
 
 function AppContent() {
   const { isDark } = useTheme();
@@ -29,6 +30,21 @@ function AppContent() {
 
 export default function RootLayout() {
   useFrameworkReady();
+
+  useEffect(() => {
+    // Initialize FileSystemService and load directory preferences on app startup
+    const initializeFileSystem = async () => {
+      try {
+        const fileSystemService = FileSystemService.getInstance();
+        await fileSystemService.loadDirectoryPreference();
+        await fileSystemService.loadUserPreferences();
+      } catch (error) {
+        console.error('Failed to initialize FileSystemService:', error);
+      }
+    };
+
+    initializeFileSystem();
+  }, []);
 
   return (
     <ThemeProvider>

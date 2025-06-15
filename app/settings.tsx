@@ -87,7 +87,7 @@ export default function SettingsScreen() {
 
   const loadStorageLocation = async () => {
     try {
-      const locationInfo = fileSystemService.getStorageLocationInfo();
+      const locationInfo = await fileSystemService.getStorageLocationInfo();
       setStorageLocation(locationInfo.location);
     } catch (error) {
       console.error('Error loading storage location:', error);

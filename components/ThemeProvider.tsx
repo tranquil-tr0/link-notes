@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useMemo, ReactNode, useEffect } from 'react';
 import { Appearance } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { THEMES, ThemeName, ThemeColors, getThemeColors, isThemeDark } from '../theme';
 
 export type Theme = ThemeName | 'system';
@@ -18,6 +19,34 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>('system');
 
   const colorScheme = Appearance.getColorScheme();
+
+  // Load saved theme preference on mount
+  useEffect(() => {
+    const loadThemePreference = async () => {
+      try {
+        const savedTheme = await AsyncStorage.getItem('app_theme_preference');
+        if (savedTheme && (savedTheme === 'system' || savedTheme === 'rosePine' || savedTheme === 'rosePineMoon' || savedTheme === 'rosePineDawn')) {
+          setTheme(savedTheme as Theme);
+        }
+      } catch (error) {
+        console.log('No saved theme preference, using default');
+      }
+    };
+
+    loadThemePreference();
+  }, []);
+
+  // Enhanced setTheme to persist the selection
+  const setAndSaveTheme = async (newTheme: Theme) => {
+    try {
+      setTheme(newTheme);
+      await AsyncStorage.setItem('app_theme_preference', newTheme);
+    } catch (error) {
+      console.error('Failed to save theme preference:', error);
+      // Still set the theme even if saving fails
+      setTheme(newTheme);
+    }
+  };
   
   const resolvedTheme: ThemeName = useMemo(() => {
     if (theme === 'system') {
@@ -35,7 +64,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     resolvedTheme,
     colors,
     isDark,
-    setTheme,
+    setTheme: setAndSaveTheme,
   }), [theme, resolvedTheme, colors, isDark]);
 
   return (
