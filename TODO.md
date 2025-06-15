@@ -1,6 +1,5 @@
 # Priority
 - quick settings tile
-- statusbar background color
 - haptics
 
 
