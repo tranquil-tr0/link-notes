@@ -1,16 +1,16 @@
 # Priority
-- test import/export when data is stored in app storage
-    - remove import/export settings options when data is not in app internal storage
+- quick settings tile
+- statusbar background color
+- haptics
 
 
 # Less priority
-- replace initial "no notes" with loading screen instead
-- duplicate notes storage to improve loading time (by not requiring IO to show initial content)
 - settings option for note sorting mode (recent, alphabetical)
-- haptics
 - fix the theme select buttons
 
 # Polish
+- duplicate notes storage to improve loading time (by not requiring IO to show initial content)
+- replace initial "no notes" with loading screen instead
 - consider forking markdown editor or making an editor or whatever else (better editor)
 - *maybe* I'll look at the note cards again
 - material you theme
