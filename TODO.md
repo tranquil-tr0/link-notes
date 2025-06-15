@@ -1,22 +1,22 @@
-- change style of top bar (search bar) to be full width search items inside, plus on bottom center or right (mabe configurable?)
-    - hide the top bar on scroll
-- better note editor
+# Priority
 - folder support
-- settings option for note sorting mode (recent, alphabetical)
-- maybeee settings option for custom color scheme
-- settings option for color scheme (i feel like dark/light is kinda minimum)
-- improve ui generally
-    - better light theme
-    - dark theme
-- haptics
 - test import/export when data is stored in app storage
     - remove import/export settings options when data is not in app internal storage
 - add welcome screen to prompt a selection of data location on start
-- look into optimizing start times
+
 - replace initial "no notes" with loading screen instead
-- decrease side margins
-- local image embed is broken
-- notes editor does not consider keyboard
-- consider setting to not show note title if it starts with "Untitled"
+
+
+# Less priority
+- settings option for note sorting mode (recent, alphabetical)
+- haptics
+
+# Polish
+- consider forking markdown editor or making an editor or whatever else (better editor)
 - *maybe* I'll look at the note cards again
-- consider forking markdown editor
+- material you theme
+- importable color theme
+- change style of top bar (search bar) to be full width search items inside, plus on bottom center or right (mabe configurable?)
+    - hide the top bar on scroll
+- look into optimizing start times
+- consider setting to not show note title if it starts with "Untitled"
