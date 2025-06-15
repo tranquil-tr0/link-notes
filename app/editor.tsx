@@ -27,7 +27,7 @@ import { FileSystemService } from '@/services/FileSystemService';
 
 export default function EditorScreen() {
   const params = useLocalSearchParams();
-  const { mode, noteId } = params;
+  const { mode, noteId, folderPath } = params;
   
   const [note, setNote] = useState<Note | null>(null);
   const [content, setContent] = useState('');
@@ -48,7 +48,7 @@ export default function EditorScreen() {
       setNoteTitle('');
       setHasUnsavedChanges(true);
     }
-  }, [mode, noteId]);
+  }, [mode, noteId, folderPath]);
 
   // Handle hardware back button on Android and keyboard settings
   useFocusEffect(
@@ -80,7 +80,7 @@ export default function EditorScreen() {
   const loadNote = async (id: string) => {
     setIsLoading(true);
     try {
-      const loadedNote = await fileSystemService.getNote(id);
+      const loadedNote = await fileSystemService.getNote(id, folderPath as string);
       if (loadedNote) {
         setNote(loadedNote);
         setContent(loadedNote.content);
@@ -190,7 +190,7 @@ export default function EditorScreen() {
         filePath: note?.filePath || '',
       };
 
-      await fileSystemService.saveNote(noteToSave, note?.filename);
+      await fileSystemService.saveNote(noteToSave, note?.filename, folderPath as string);
       setNote(noteToSave);
       setHasUnsavedChanges(false);
       
@@ -225,7 +225,7 @@ export default function EditorScreen() {
     if (!note) return;
     
     try {
-      await fileSystemService.deleteNote(note.filename);
+      await fileSystemService.deleteNote(note.filename, folderPath as string);
       router.replace('/');
     } catch (error) {
       console.error('Error deleting note:', error);

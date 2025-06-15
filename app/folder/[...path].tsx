@@ -130,11 +130,14 @@ export default function FolderScreen() {
   };
 
   const handleNotePress = (note: NoteItem) => {
+    // Pass the current folder path so the note is opened from the correct location
+    const currentFolderPath = path ? path.join('/') : '';
     router.push({
       pathname: '/editor',
-      params: { 
+      params: {
         mode: 'edit',
-        noteId: note.filename
+        noteId: note.filename,
+        folderPath: currentFolderPath
       }
     });
   };
@@ -198,7 +201,8 @@ export default function FolderScreen() {
 
   const deleteNote = async (noteId: string) => {
     try {
-      await fileSystemService.deleteNote(noteId);
+      const currentFolderPath = path ? path.join('/') : '';
+      await fileSystemService.deleteNote(noteId, currentFolderPath);
       await loadDirectoryContents();
     } catch (error) {
       console.error('Error deleting note:', error);

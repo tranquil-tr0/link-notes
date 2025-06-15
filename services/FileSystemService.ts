@@ -297,17 +297,33 @@ export class FileSystemService {
     }
   }
 
-  async getNote(filename: string): Promise<Note | null> {
+  async getNote(filename: string, folderPath?: string): Promise<Note | null> {
     if (Platform.OS === 'web') {
       return this.getWebNote(filename);
     }
     
     try {
-      const currentDir = this.getNotesDirectory();
+      // Determine the target directory
+      let targetDir: string;
+      const rootDir = this.getNotesDirectory();
       
-      if (currentDir.startsWith('content://')) {
+      if (folderPath && folderPath.trim() !== '') {
+        // Construct path to specific folder
+        if (rootDir.startsWith('content://')) {
+          // SAF path
+          targetDir = `${rootDir}/${folderPath}`;
+        } else {
+          // Regular filesystem path
+          targetDir = `${rootDir}${folderPath}/`;
+        }
+      } else {
+        // Use root directory
+        targetDir = rootDir;
+      }
+      
+      if (targetDir.startsWith('content://')) {
         // SAF path
-        const fileUri = `${currentDir}/${filename}.md`;
+        const fileUri = `${targetDir}/${filename}.md`;
         
         const content = await readFile(fileUri);
         const fileStat = await stat(fileUri);
@@ -321,7 +337,7 @@ export class FileSystemService {
         };
       } else {
         // Regular file system path
-        const filePath = `${currentDir}${filename}.md`;
+        const filePath = `${targetDir}${filename}.md`;
         const content = await FileSystem.readAsStringAsync(filePath);
         const fileStat = await FileSystem.getInfoAsync(filePath);
         
@@ -360,7 +376,7 @@ export class FileSystemService {
     }
   }
 
-  async saveNote(note: Note, oldFilename?: string): Promise<void> {
+  async saveNote(note: Note, oldFilename?: string, folderPath?: string): Promise<void> {
     if (Platform.OS === 'web') {
       await this.saveWebNote(note);
       return;
@@ -369,24 +385,40 @@ export class FileSystemService {
     await this.ensureDirectoryExists();
     
     try {
-      const currentDir = this.getNotesDirectory();
+      // Determine the target directory
+      let targetDir: string;
+      const rootDir = this.getNotesDirectory();
+      
+      if (folderPath && folderPath.trim() !== '') {
+        // Construct path to specific folder
+        if (rootDir.startsWith('content://')) {
+          // SAF path
+          targetDir = `${rootDir}/${folderPath}`;
+        } else {
+          // Regular filesystem path
+          targetDir = `${rootDir}${folderPath}/`;
+        }
+      } else {
+        // Use root directory
+        targetDir = rootDir;
+      }
       
       // If filename changed, delete the old file first
       if (oldFilename && oldFilename !== note.filename) {
         try {
-          await this.deleteNote(oldFilename);
+          await this.deleteNote(oldFilename, folderPath);
         } catch (error) {
           console.log('Old file not found or could not be deleted:', error);
         }
       }
       
-      if (currentDir.startsWith('content://')) {
+      if (targetDir.startsWith('content://')) {
         // SAF path
-        const fileUri = `${currentDir}/${note.filename}.md`;
+        const fileUri = `${targetDir}/${note.filename}.md`;
         await writeFile(fileUri, note.content);
       } else {
         // Regular file system path
-        const filePath = `${currentDir}${note.filename}.md`;
+        const filePath = `${targetDir}${note.filename}.md`;
         await FileSystem.writeAsStringAsync(filePath, note.content);
       }
     } catch (error) {
@@ -423,22 +455,38 @@ export class FileSystemService {
     localStorage.setItem('notes', JSON.stringify(notes));
   }
 
-  async deleteNote(id: string): Promise<void> {
+  async deleteNote(id: string, folderPath?: string): Promise<void> {
     if (Platform.OS === 'web') {
       await this.deleteWebNote(id);
       return;
     }
     
     try {
-      const currentDir = this.getNotesDirectory();
+      // Determine the target directory
+      let targetDir: string;
+      const rootDir = this.getNotesDirectory();
       
-      if (currentDir.startsWith('content://')) {
+      if (folderPath && folderPath.trim() !== '') {
+        // Construct path to specific folder
+        if (rootDir.startsWith('content://')) {
+          // SAF path
+          targetDir = `${rootDir}/${folderPath}`;
+        } else {
+          // Regular filesystem path
+          targetDir = `${rootDir}${folderPath}/`;
+        }
+      } else {
+        // Use root directory
+        targetDir = rootDir;
+      }
+      
+      if (targetDir.startsWith('content://')) {
         // SAF path
-        const fileUri = `${currentDir}/${id}.md`;
+        const fileUri = `${targetDir}/${id}.md`;
         await unlink(fileUri);
       } else {
         // Regular file system path
-        const filePath = `${currentDir}${id}.md`;
+        const filePath = `${targetDir}${id}.md`;
         await FileSystem.deleteAsync(filePath);
       }
     } catch (error) {
