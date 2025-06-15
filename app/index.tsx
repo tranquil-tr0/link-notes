@@ -46,7 +46,10 @@ export default function HomeScreen() {
   const loadDirectoryContents = async () => {
     setLoading(true);
     try {
-      // Load user preferences first
+      // Load directory preference first to ensure correct storage path
+      await fileSystemService.loadDirectoryPreference();
+      
+      // Load user preferences
       await fileSystemService.loadUserPreferences();
       
       // Always load root directory contents for home screen

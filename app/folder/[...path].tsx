@@ -61,6 +61,9 @@ export default function FolderScreen() {
   const loadDirectoryContents = async () => {
     setLoading(true);
     try {
+      // Load directory preference first to ensure correct storage path
+      await fileSystemService.loadDirectoryPreference();
+      
       await fileSystemService.loadUserPreferences();
       
       const targetPath = getDirectoryPath();
