@@ -9,18 +9,30 @@ import {
   TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Plus, Search, X, Settings } from 'lucide-react-native';
+import { Plus, Search, X, Settings, ArrowLeft, Home } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
 import MasonryGrid from '@/components/MasonryGrid';
 import NoteCard from '@/components/NoteCard';
+import FolderCard from '@/components/FolderCard';
 import { NotePreview } from '@/types/Note';
+import { DirectoryContents, FolderItem, NoteItem } from '@/types/FileSystemItem';
 import { FileSystemService } from '@/services/FileSystemService';
 import { useTheme } from '@/components/ThemeProvider';
 
 export default function HomeScreen() {
-  const [notes, setNotes] = useState<NotePreview[]>([]);
-  const [filteredNotes, setFilteredNotes] = useState<NotePreview[]>([]);
+  const [directoryContents, setDirectoryContents] = useState<DirectoryContents>({
+    folders: [],
+    notes: [],
+    currentPath: '',
+    parentPath: null,
+  });
+  const [filteredContents, setFilteredContents] = useState<DirectoryContents>({
+    folders: [],
+    notes: [],
+    currentPath: '',
+    parentPath: null,
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -30,20 +42,20 @@ export default function HomeScreen() {
 
   const fileSystemService = FileSystemService.getInstance();
 
-  const loadNotes = async () => {
+  const loadDirectoryContents = async () => {
     setLoading(true);
     try {
       // Load user preferences first
       await fileSystemService.loadUserPreferences();
       
-      const loadedNotes = await fileSystemService.getAllNotes();
-      setNotes(loadedNotes);
-      setFilteredNotes(loadedNotes);
+      const contents = await fileSystemService.getDirectoryContents();
+      setDirectoryContents(contents);
+      setFilteredContents(contents);
       
       // Update timestamp visibility setting
       setShowTimestamp(fileSystemService.getShowTimestamps());
     } catch (error) {
-      console.error('Error loading notes:', error);
+      console.error('Error loading directory contents:', error);
     } finally {
       setLoading(false);
     }
@@ -51,7 +63,7 @@ export default function HomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      loadNotes();
+      loadDirectoryContents();
     }, [])
   );
 
@@ -74,16 +86,23 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (searchQuery.trim() === '') {
-      setFilteredNotes(notes);
+      setFilteredContents(directoryContents);
     } else {
-      const filtered = notes.filter(note => {
+      const filteredFolders = directoryContents.folders.filter(folder =>
+        folder.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      const filteredNotes = directoryContents.notes.filter(note => {
         const title = formatFilenameAsTitle(note.filename);
         return title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                note.preview.toLowerCase().includes(searchQuery.toLowerCase());
       });
-      setFilteredNotes(filtered);
+      setFilteredContents({
+        ...directoryContents,
+        folders: filteredFolders,
+        notes: filteredNotes,
+      });
     }
-  }, [searchQuery, notes]);
+  }, [searchQuery, directoryContents]);
 
   const handleCreateNote = () => {
     router.push({
@@ -92,43 +111,72 @@ export default function HomeScreen() {
     });
   };
 
-  const handleNotePress = (note: NotePreview) => {
+  const handleNotePress = (note: NoteItem) => {
     router.push({
       pathname: '/editor',
-      params: { 
+      params: {
         mode: 'edit',
         noteId: note.filename
       }
     });
   };
 
-  const handleNoteLongPress = (note: NotePreview) => {
+  const handleFolderPress = async (folder: FolderItem) => {
+    setLoading(true);
+    try {
+      const contents = await fileSystemService.navigateToDirectory(folder.path);
+      setDirectoryContents(contents);
+      setFilteredContents(contents);
+      setSearchQuery(''); // Clear search when navigating
+    } catch (error) {
+      console.error('Error navigating to folder:', error);
+      Alert.alert('Error', 'Failed to open folder. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNoteLongPress = (note: NoteItem) => {
     Alert.alert(
       'Note Options',
       `What would you like to do with "${formatFilenameAsTitle(note.filename)}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Edit', 
-          onPress: () => handleNotePress(note) 
+        {
+          text: 'Edit',
+          onPress: () => handleNotePress(note)
         },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
-          onPress: () => confirmDelete(note) 
+          onPress: () => confirmDelete(note)
         },
       ]
     );
   };
 
-  const confirmDelete = (note: NotePreview) => {
+  const handleFolderLongPress = (folder: FolderItem) => {
+    Alert.alert(
+      'Folder Options',
+      `What would you like to do with "${folder.name}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Open',
+          onPress: () => handleFolderPress(folder)
+        },
+      ]
+    );
+  };
+
+  const confirmDelete = (note: NoteItem) => {
     Alert.alert(
       'Delete Note',
       `Are you sure you want to delete "${formatFilenameAsTitle(note.filename)}"? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
           onPress: () => deleteNote(note.filename)
         },
@@ -139,10 +187,40 @@ export default function HomeScreen() {
   const deleteNote = async (noteId: string) => {
     try {
       await fileSystemService.deleteNote(noteId);
-      await loadNotes();
+      await loadDirectoryContents();
     } catch (error) {
       console.error('Error deleting note:', error);
       Alert.alert('Error', 'Failed to delete note. Please try again.');
+    }
+  };
+
+  const handleBackPress = async () => {
+    setLoading(true);
+    try {
+      const contents = await fileSystemService.navigateToParent();
+      if (contents) {
+        setDirectoryContents(contents);
+        setFilteredContents(contents);
+        setSearchQuery(''); // Clear search when navigating
+      }
+    } catch (error) {
+      console.error('Error navigating back:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHomePress = async () => {
+    setLoading(true);
+    try {
+      const contents = await fileSystemService.navigateToRoot();
+      setDirectoryContents(contents);
+      setFilteredContents(contents);
+      setSearchQuery(''); // Clear search when navigating
+    } catch (error) {
+      console.error('Error navigating to root:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -210,10 +288,32 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.content}>
-        {filteredNotes.length === 0 ? (
+        {/* Navigation Header */}
+        {directoryContents.parentPath && (
+          <View style={[styles.navigationHeader, { backgroundColor: colors.overlay, borderBottomColor: colors.border }]}>
+            <TouchableOpacity
+              style={[styles.navButton, { backgroundColor: colors.surface }]}
+              onPress={handleBackPress}
+              activeOpacity={0.7}
+            >
+              <ArrowLeft size={18} color={colors.text} />
+              <Text style={[styles.navButtonText, { color: colors.text }]}>Back</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.navButton, { backgroundColor: colors.surface }]}
+              onPress={handleHomePress}
+              activeOpacity={0.7}
+            >
+              <Home size={18} color={colors.text} />
+              <Text style={[styles.navButtonText, { color: colors.text }]}>Home</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {filteredContents.folders.length === 0 && filteredContents.notes.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={[styles.emptyStateText, { color: colors.textMuted }]}>
-              {searchQuery ? 'No notes found' : 'No notes yet'}
+              {searchQuery ? 'No items found' : 'No items yet'}
             </Text>
             <Text style={[styles.emptyStateSubtext, { color: colors.textMuted }]}>
               {searchQuery
@@ -224,15 +324,39 @@ export default function HomeScreen() {
           </View>
         ) : (
           <MasonryGrid
-            items={filteredNotes.map(note => (
-              <NoteCard
-                name={note.filename}
-                note={note}
-                onPress={handleNotePress}
-                onLongPress={handleNoteLongPress}
-                showTimestamp={showTimestamp}
-              />
-            ))}
+            items={[
+              // Render folders first
+              ...filteredContents.folders.map((folder, index) => (
+                <FolderCard
+                  folder={folder}
+                  onPress={handleFolderPress}
+                  onLongPress={handleFolderLongPress}
+                  showTimestamp={showTimestamp}
+                />
+              )),
+              // Then render notes
+              ...filteredContents.notes.map((note, index) => (
+                <NoteCard
+                  name={note.filename}
+                  note={{
+                    filename: note.filename,
+                    preview: note.preview,
+                    createdAt: note.createdAt,
+                    updatedAt: note.updatedAt,
+                    filePath: note.filePath,
+                  }}
+                  onPress={(notePreview) => handleNotePress({
+                    ...notePreview,
+                    type: 'note' as const,
+                  })}
+                  onLongPress={(notePreview) => handleNoteLongPress({
+                    ...notePreview,
+                    type: 'note' as const,
+                  })}
+                  showTimestamp={showTimestamp}
+                />
+              ))
+            ]}
             numColumns={2}
             spacing={16}
           />
@@ -312,5 +436,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  navigationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  navButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  navButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

@@ -3,6 +3,7 @@ import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { openDocumentTree, listFiles, readFile, writeFile, mkdir, unlink, stat } from 'react-native-saf-x';
 import { Note, NotePreview } from '@/types/Note';
+import { DirectoryContents, FolderItem, NoteItem, FileSystemItem } from '@/types/FileSystemItem';
 
 interface UserPreferences {
   showTimestamps: boolean;
@@ -17,6 +18,7 @@ export class FileSystemService {
   private notesDirectory: string;
   private customDirectory: string | null = null;
   private userPreferences: UserPreferences = DEFAULT_PREFERENCES;
+  private currentDirectory: string | null = null;
 
   private constructor() {
     if (Platform.OS === 'web') {
@@ -39,6 +41,27 @@ export class FileSystemService {
    */
   getNotesDirectory(): string {
     return this.customDirectory || this.notesDirectory;
+  }
+
+  /**
+   * Get the current directory path (for navigation)
+   */
+  getCurrentDirectory(): string {
+    return this.currentDirectory || this.getNotesDirectory();
+  }
+
+  /**
+   * Set the current directory path (for navigation)
+   */
+  setCurrentDirectory(path: string): void {
+    this.currentDirectory = path;
+  }
+
+  /**
+   * Reset to root directory
+   */
+  resetToRootDirectory(): void {
+    this.currentDirectory = null;
   }
 
   /**
@@ -480,5 +503,250 @@ export class FileSystemService {
    */
   async setShowTimestamps(show: boolean): Promise<void> {
     await this.saveUserPreferences({ showTimestamps: show });
+  }
+
+  /**
+   * Get directory contents (folders and notes) for the current directory
+   */
+  async getDirectoryContents(directoryPath?: string): Promise<DirectoryContents> {
+    const targetPath = directoryPath || this.getCurrentDirectory();
+    const rootPath = this.getNotesDirectory();
+    
+    // Load directory preference first
+    await this.loadDirectoryPreference();
+    await this.ensureDirectoryExists();
+    
+    if (Platform.OS === 'web') {
+      return this.getWebDirectoryContents(targetPath, rootPath);
+    }
+    
+    try {
+      // Check if we're using SAF (URI starts with content://)
+      if (targetPath.startsWith('content://')) {
+        return await this.getSAFDirectoryContents(targetPath, rootPath);
+      } else {
+        return await this.getFileSystemDirectoryContents(targetPath, rootPath);
+      }
+    } catch (error) {
+      console.error('Error reading directory contents:', error);
+      return {
+        folders: [],
+        notes: [],
+        currentPath: targetPath,
+        parentPath: this.getParentPath(targetPath, rootPath),
+      };
+    }
+  }
+
+  /**
+   * Get parent path for navigation
+   */
+  private getParentPath(currentPath: string, rootPath: string): string | null {
+    if (currentPath === rootPath) {
+      return null; // Already at root
+    }
+    
+    if (currentPath.startsWith('content://')) {
+      // SAF path - extract parent
+      const pathParts = currentPath.split('/');
+      if (pathParts.length > 4) { // content://authority/tree/document/...
+        return pathParts.slice(0, -1).join('/');
+      }
+      return rootPath;
+    } else {
+      // Regular filesystem path
+      const pathParts = currentPath.split('/');
+      if (pathParts.length > 1) {
+        const parentPath = pathParts.slice(0, -1).join('/') + '/';
+        return parentPath.length >= rootPath.length ? parentPath : null;
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Get directory contents using SAF
+   */
+  private async getSAFDirectoryContents(directoryUri: string, rootPath: string): Promise<DirectoryContents> {
+    try {
+      const files = await listFiles(directoryUri);
+      const folders: FolderItem[] = [];
+      const notes: NoteItem[] = [];
+      
+      for (const file of files) {
+        if (file.type === 'directory') {
+          folders.push({
+            name: file.name,
+            type: 'folder',
+            path: file.uri,
+            createdAt: new Date(file.lastModified),
+            updatedAt: new Date(file.lastModified),
+          });
+        } else if (file.name.endsWith('.md')) {
+          try {
+            const content = await readFile(file.uri);
+            const filename = file.name.replace('.md', '');
+            const preview = content.substring(0, 200);
+            
+            notes.push({
+              filename,
+              preview,
+              createdAt: new Date(file.lastModified),
+              updatedAt: new Date(file.lastModified),
+              filePath: file.uri,
+              type: 'note',
+            });
+          } catch (fileError) {
+            console.error(`Error reading file ${file.name}:`, fileError);
+          }
+        }
+      }
+      
+      // Sort folders and notes separately
+      folders.sort((a, b) => a.name.localeCompare(b.name));
+      notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      
+      return {
+        folders,
+        notes,
+        currentPath: directoryUri,
+        parentPath: this.getParentPath(directoryUri, rootPath),
+      };
+    } catch (error) {
+      console.error('Error reading SAF directory contents:', error);
+      return {
+        folders: [],
+        notes: [],
+        currentPath: directoryUri,
+        parentPath: this.getParentPath(directoryUri, rootPath),
+      };
+    }
+  }
+
+  /**
+   * Get directory contents using regular filesystem
+   */
+  private async getFileSystemDirectoryContents(currentDir: string, rootPath: string): Promise<DirectoryContents> {
+    try {
+      const files = await FileSystem.readDirectoryAsync(currentDir);
+      const folders: FolderItem[] = [];
+      const notes: NoteItem[] = [];
+      
+      for (const file of files) {
+        const filePath = `${currentDir}${file}`;
+        const stat = await FileSystem.getInfoAsync(filePath);
+        
+        if (stat.exists && stat.isDirectory) {
+          const modTime = 'modificationTime' in stat ? stat.modificationTime : Date.now();
+          folders.push({
+            name: file,
+            type: 'folder',
+            path: filePath + '/',
+            createdAt: new Date(modTime),
+            updatedAt: new Date(modTime),
+          });
+        } else if (file.endsWith('.md')) {
+          try {
+            const content = await FileSystem.readAsStringAsync(filePath);
+            const filename = file.replace('.md', '');
+            const preview = content.substring(0, 200);
+            const modTime = stat.exists && 'modificationTime' in stat ? stat.modificationTime : Date.now();
+            
+            notes.push({
+              filename,
+              preview,
+              createdAt: new Date(modTime),
+              updatedAt: new Date(modTime),
+              filePath,
+              type: 'note',
+            });
+          } catch (fileError) {
+            console.error(`Error reading file ${file}:`, fileError);
+          }
+        }
+      }
+      
+      // Sort folders and notes separately
+      folders.sort((a, b) => a.name.localeCompare(b.name));
+      notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      
+      return {
+        folders,
+        notes,
+        currentPath: currentDir,
+        parentPath: this.getParentPath(currentDir, rootPath),
+      };
+    } catch (error) {
+      console.error('Error reading filesystem directory contents:', error);
+      return {
+        folders: [],
+        notes: [],
+        currentPath: currentDir,
+        parentPath: this.getParentPath(currentDir, rootPath),
+      };
+    }
+  }
+
+  /**
+   * Get directory contents for web platform
+   */
+  private getWebDirectoryContents(targetPath: string, rootPath: string): DirectoryContents {
+    // For web, we'll simulate folder structure using localStorage
+    // This is a simplified implementation - in a real app, you might want more sophisticated folder handling
+    const notesData = localStorage.getItem('notes');
+    const notes: NoteItem[] = [];
+    
+    if (notesData) {
+      try {
+        const allNotes = JSON.parse(notesData);
+        allNotes.forEach((note: any) => {
+          notes.push({
+            filename: note.filename,
+            preview: note.preview || note.content?.substring(0, 200) || '',
+            createdAt: new Date(note.createdAt),
+            updatedAt: new Date(note.updatedAt),
+            filePath: note.filePath || `${targetPath}/${note.filename}.md`,
+            type: 'note',
+          });
+        });
+      } catch {
+        // Handle parsing errors
+      }
+    }
+    
+    return {
+      folders: [], // Web doesn't support real folders in this implementation
+      notes: notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()),
+      currentPath: targetPath,
+      parentPath: null, // Web implementation doesn't support folder navigation
+    };
+  }
+
+  /**
+   * Navigate to a specific directory
+   */
+  async navigateToDirectory(path: string): Promise<DirectoryContents> {
+    this.setCurrentDirectory(path);
+    return await this.getDirectoryContents(path);
+  }
+
+  /**
+   * Navigate to parent directory
+   */
+  async navigateToParent(): Promise<DirectoryContents | null> {
+    const currentContents = await this.getDirectoryContents();
+    if (currentContents.parentPath) {
+      this.setCurrentDirectory(currentContents.parentPath);
+      return await this.getDirectoryContents(currentContents.parentPath);
+    }
+    return null;
+  }
+
+  /**
+   * Navigate to root directory
+   */
+  async navigateToRoot(): Promise<DirectoryContents> {
+    this.resetToRootDirectory();
+    return await this.getDirectoryContents();
   }
 }
