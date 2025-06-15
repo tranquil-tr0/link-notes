@@ -10,17 +10,17 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus, Search, X, Settings } from 'lucide-react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { router } from 'expo-router';
 import MasonryGrid from '@/components/MasonryGrid';
 import NoteCard from '@/components/NoteCard';
 import FolderCard from '@/components/FolderCard';
-import { NotePreview } from '@/types/Note';
 import { DirectoryContents, FolderItem, NoteItem } from '@/types/FileSystemItem';
 import { FileSystemService } from '@/services/FileSystemService';
 import { useTheme } from '@/components/ThemeProvider';
 
-export default function HomeScreen() {
+export default function FolderScreen() {
+  const { path } = useLocalSearchParams<{ path: string[] }>();
   const [directoryContents, setDirectoryContents] = useState<DirectoryContents>({
     folders: [],
     notes: [],
@@ -42,19 +42,32 @@ export default function HomeScreen() {
 
   const fileSystemService = FileSystemService.getInstance();
 
+  // Construct the full directory path from route params
+  const getDirectoryPath = (): string => {
+    if (!path || path.length === 0) {
+      return fileSystemService.getNotesDirectory();
+    }
+    
+    const rootPath = fileSystemService.getNotesDirectory();
+    if (rootPath.startsWith('content://')) {
+      // SAF path
+      return `${rootPath}/${path.join('/')}`;
+    } else {
+      // Regular filesystem path
+      return `${rootPath}${path.join('/')}/`;
+    }
+  };
+
   const loadDirectoryContents = async () => {
     setLoading(true);
     try {
-      // Load user preferences first
       await fileSystemService.loadUserPreferences();
       
-      // Always load root directory contents for home screen
-      fileSystemService.resetToRootDirectory();
-      const contents = await fileSystemService.getDirectoryContents();
+      const targetPath = getDirectoryPath();
+      const contents = await fileSystemService.getDirectoryContents(targetPath);
       setDirectoryContents(contents);
       setFilteredContents(contents);
       
-      // Update timestamp visibility setting
       setShowTimestamp(fileSystemService.getShowTimestamps());
     } catch (error) {
       console.error('Error loading directory contents:', error);
@@ -66,7 +79,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadDirectoryContents();
-    }, [])
+    }, [path])
   );
 
   // Additional focus effect to update preferences when returning from settings
@@ -81,9 +94,7 @@ export default function HomeScreen() {
   );
 
   const formatFilenameAsTitle = (filename: string): string => {
-    // Convert filename to display title
-    return filename
-      .replace(/\b\w/g, l => l.toUpperCase()); // Capitalize each word
+    return filename.replace(/\b\w/g, l => l.toUpperCase());
   };
 
   useEffect(() => {
@@ -107,16 +118,21 @@ export default function HomeScreen() {
   }, [searchQuery, directoryContents]);
 
   const handleCreateNote = () => {
+    // Pass the current folder path so the note is created in the right location
+    const currentFolderPath = path ? path.join('/') : '';
     router.push({
       pathname: '/editor',
-      params: { mode: 'create' }
+      params: { 
+        mode: 'create',
+        folderPath: currentFolderPath
+      }
     });
   };
 
   const handleNotePress = (note: NoteItem) => {
     router.push({
       pathname: '/editor',
-      params: {
+      params: { 
         mode: 'edit',
         noteId: note.filename
       }
@@ -124,10 +140,11 @@ export default function HomeScreen() {
   };
 
   const handleFolderPress = (folder: FolderItem) => {
-    // Navigate to the folder using the new folder screen
+    // Navigate to the subfolder by extending the current path
+    const newPath = path ? [...path, folder.name] : [folder.name];
     router.push({
       pathname: '/folder/[...path]',
-      params: { path: [folder.name] }
+      params: { path: newPath }
     });
   };
 
@@ -137,14 +154,14 @@ export default function HomeScreen() {
       `What would you like to do with "${formatFilenameAsTitle(note.filename)}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Edit',
-          onPress: () => handleNotePress(note)
+        { 
+          text: 'Edit', 
+          onPress: () => handleNotePress(note) 
         },
-        {
-          text: 'Delete',
+        { 
+          text: 'Delete', 
           style: 'destructive',
-          onPress: () => confirmDelete(note)
+          onPress: () => confirmDelete(note) 
         },
       ]
     );
@@ -156,9 +173,9 @@ export default function HomeScreen() {
       `What would you like to do with "${folder.name}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Open',
-          onPress: () => handleFolderPress(folder)
+        { 
+          text: 'Open', 
+          onPress: () => handleFolderPress(folder) 
         },
       ]
     );
@@ -170,8 +187,8 @@ export default function HomeScreen() {
       `Are you sure you want to delete "${formatFilenameAsTitle(note.filename)}"? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
+        { 
+          text: 'Delete', 
           style: 'destructive',
           onPress: () => deleteNote(note.filename)
         },
@@ -189,7 +206,6 @@ export default function HomeScreen() {
     }
   };
 
-
   const toggleSearch = () => {
     setIsSearchVisible(!isSearchVisible);
     if (isSearchVisible) {
@@ -201,11 +217,19 @@ export default function HomeScreen() {
     router.push('/settings');
   };
 
+  // Get the current folder name for display
+  const getCurrentFolderName = (): string => {
+    if (!path || path.length === 0) {
+      return 'Notes';
+    }
+    return path[path.length - 1];
+  };
+
   return (
     <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }, { paddingTop: insets.top }]}>
       <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <View style={styles.headerTop}>
-          <Text style={[styles.title, { color: colors.text }]}>Notes</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{getCurrentFolderName()}</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={[styles.headerButton, { backgroundColor: colors.overlay }]}
@@ -243,7 +267,7 @@ export default function HomeScreen() {
                 borderColor: colors.border,
                 color: colors.text
               }]}
-              placeholder="Search notes..."
+              placeholder="Search items..."
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
