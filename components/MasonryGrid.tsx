@@ -34,7 +34,7 @@ export default function MasonryGrid({
 
   // Calculate column width accounting for horizontal margins
   // Total horizontal space needed: left margin + (numColumns-1) * between margins + right margin
-  const totalHorizontalMargins = SPACING.margin * (numColumns + 1);
+  const totalHorizontalMargins = spacing * (numColumns + 1);
   const availableWidth = screenWidth - totalHorizontalMargins;
   const columnWidth = availableWidth / numColumns;
 
@@ -115,7 +115,7 @@ export default function MasonryGrid({
 
       {/* Render visible columns */}
       {columns.length > 0 && (
-        <View style={styles.columnsContainer}>
+        <View style={[styles.columnsContainer, { paddingRight: spacing }]}> 
           {columns.map((column, colIdx) => (
             <View
               // @ts-ignore: Allow key on View for list items
@@ -124,7 +124,7 @@ export default function MasonryGrid({
                 styles.column,
                 {
                   width: columnWidth,
-                  marginLeft: SPACING.margin
+                  marginLeft: spacing
                 }
               ]}
             >
@@ -133,8 +133,8 @@ export default function MasonryGrid({
                   // @ts-ignore: Allow key on View for list items
                   key={`item-${layout.index}`}
                   style={{
-                    marginTop: itemIdx === 0 ? SPACING.margin : 0,
-                    marginBottom: SPACING.margin
+                    marginTop: itemIdx === 0 ? spacing : 0,
+                    marginBottom: spacing
                   }}
                 >
                   {items[layout.index]}
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingBottom: SPACING.margin,
+    paddingBottom: 100,
   },
   measurementContainer: {
     position: 'absolute',
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   columnsContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingRight: SPACING.margin, // Add right margin
+    // paddingRight will be set inline to use the spacing prop
   },
   column: {
     flex: 0,

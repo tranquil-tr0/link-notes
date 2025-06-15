@@ -19,6 +19,7 @@ import { NotePreview } from '@/types/Note';
 import { DirectoryContents, FolderItem, NoteItem } from '@/types/FileSystemItem';
 import { FileSystemService } from '@/services/FileSystemService';
 import { useTheme } from '@/components/ThemeProvider';
+import { SPACING } from '@/theme';
 
 export default function HomeScreen() {
   const [directoryContents, setDirectoryContents] = useState<DirectoryContents>({
@@ -66,17 +67,6 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadDirectoryContents();
-    }, [])
-  );
-
-  // Additional focus effect to update preferences when returning from settings
-  useFocusEffect(
-    useCallback(() => {
-      const updatePreferences = async () => {
-        await fileSystemService.loadUserPreferences();
-        setShowTimestamp(fileSystemService.getShowTimestamps());
-      };
-      updatePreferences();
     }, [])
   );
 
@@ -302,7 +292,7 @@ export default function HomeScreen() {
               ))
             ]}
             numColumns={2}
-            spacing={16}
+            spacing={SPACING.margin}
           />
         )}
       </View>

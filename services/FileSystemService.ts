@@ -19,6 +19,13 @@ export class FileSystemService {
   private customDirectory: string | null = null;
   private userPreferences: UserPreferences = DEFAULT_PREFERENCES;
   private currentDirectory: string | null = null;
+  
+  // Cache implementation
+  private notesCache: Map<string, NotePreview[]> = new Map();
+  private noteContentCache: Map<string, Note> = new Map();
+  private directoryPreferenceCache: string | null | undefined = undefined; // undefined = not loaded, null = no preference
+  private lastCacheUpdate: number = 0;
+  private cacheValidityDuration: number = 5 * 60 * 1000; // 5 minutes
 
   private constructor() {
     if (Platform.OS === 'web') {
@@ -69,6 +76,11 @@ export class FileSystemService {
    */
   async setCustomDirectory(directory: string): Promise<void> {
     this.customDirectory = directory;
+    this.directoryPreferenceCache = directory;
+    
+    // Clear cache since directory changed
+    this.clearCache();
+    
     // Save the preference for persistence
     try {
       await AsyncStorage.setItem('notes_directory_preference', directory);
@@ -78,18 +90,56 @@ export class FileSystemService {
   }
 
   /**
-   * Load the saved directory preference
+   * Clear all caches when filesystem changes
+   */
+  private clearCache(): void {
+    this.notesCache.clear();
+    this.noteContentCache.clear();
+    this.lastCacheUpdate = 0;
+  }
+
+  /**
+   * Check if cache is valid
+   */
+  private isCacheValid(): boolean {
+    return Date.now() - this.lastCacheUpdate < this.cacheValidityDuration;
+  }
+
+  /**
+   * Get cache key for notes based on directory
+   */
+  private getCacheKey(directory: string): string {
+    return `notes_${directory}`;
+  }
+
+  /**
+   * Load the saved directory preference (cached)
    */
   async loadDirectoryPreference(): Promise<void> {
-    if (Platform.OS === 'web') return;
+    // Return cached result if already loaded
+    if (this.directoryPreferenceCache !== undefined) {
+      if (this.directoryPreferenceCache !== null) {
+        this.customDirectory = this.directoryPreferenceCache;
+      }
+      return;
+    }
+    
+    if (Platform.OS === 'web') {
+      this.directoryPreferenceCache = null;
+      return;
+    }
     
     try {
       const savedDirectory = await AsyncStorage.getItem('notes_directory_preference');
       if (savedDirectory) {
         this.customDirectory = savedDirectory;
+        this.directoryPreferenceCache = savedDirectory;
+      } else {
+        this.directoryPreferenceCache = null;
       }
     } catch (error) {
       console.log('No saved directory preference');
+      this.directoryPreferenceCache = null;
     }
   }
 
@@ -272,31 +322,47 @@ export class FileSystemService {
   }
 
   private async getSAFNotes(directoryUri: string): Promise<NotePreview[]> {
+    const cacheKey = this.getCacheKey(directoryUri);
+    
+    // Check cache first
+    if (this.isCacheValid() && this.notesCache.has(cacheKey)) {
+      return this.notesCache.get(cacheKey)!;
+    }
+    
     try {
       const files = await listFiles(directoryUri);
       const markdownFiles = files.filter(file => file.name.endsWith('.md') && file.type === 'file');
       
-      const notes: NotePreview[] = [];
-      
-      for (const file of markdownFiles) {
+      // Read files in parallel using Promise.all
+      const notePromises = markdownFiles.map(async (file) => {
         try {
+          // Read only first 200 characters for preview
           const content = await readFile(file.uri);
           const filename = file.name.replace('.md', '');
           const preview = content.substring(0, 200);
           
-          notes.push({
+          return {
             filename,
             preview,
             createdAt: new Date(file.lastModified),
             updatedAt: new Date(file.lastModified),
             filePath: file.uri,
-          });
+          };
         } catch (fileError) {
           console.error(`Error reading file ${file.name}:`, fileError);
+          return null;
         }
-      }
+      });
       
-      return notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      const notesResults = await Promise.all(notePromises);
+      const notes = notesResults.filter(note => note !== null) as NotePreview[];
+      const sortedNotes = notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      
+      // Update cache
+      this.notesCache.set(cacheKey, sortedNotes);
+      this.lastCacheUpdate = Date.now();
+      
+      return sortedNotes;
     } catch (error) {
       console.error('Error reading SAF notes:', error);
       return [];
@@ -304,32 +370,53 @@ export class FileSystemService {
   }
 
   private async getFileSystemNotes(currentDir: string): Promise<NotePreview[]> {
+    const cacheKey = this.getCacheKey(currentDir);
+    
+    // Check cache first
+    if (this.isCacheValid() && this.notesCache.has(cacheKey)) {
+      return this.notesCache.get(cacheKey)!;
+    }
+    
     try {
       const files = await FileSystem.readDirectoryAsync(currentDir);
       const markdownFiles = files.filter(file => file.endsWith('.md'));
       
-      const notes: NotePreview[] = [];
+      // Read files in parallel using Promise.all
+      const notePromises = markdownFiles.map(async (file) => {
+        try {
+          const filePath = `${currentDir}${file}`;
+          
+          // Read only first 200 characters for preview
+          const content = await FileSystem.readAsStringAsync(filePath);
+          const stat = await FileSystem.getInfoAsync(filePath);
+          
+          const filename = file.replace('.md', '');
+          const preview = content.substring(0, 200);
+          
+          const modTime = stat.exists && 'modificationTime' in stat ? stat.modificationTime : Date.now();
+          
+          return {
+            filename,
+            preview,
+            createdAt: new Date(modTime),
+            updatedAt: new Date(modTime),
+            filePath,
+          };
+        } catch (fileError) {
+          console.error(`Error reading file ${file}:`, fileError);
+          return null;
+        }
+      });
       
-      for (const file of markdownFiles) {
-        const filePath = `${currentDir}${file}`;
-        const content = await FileSystem.readAsStringAsync(filePath);
-        const stat = await FileSystem.getInfoAsync(filePath);
-        
-        const filename = file.replace('.md', '');
-        const preview = content.substring(0, 200);
-        
-        const modTime = stat.exists && 'modificationTime' in stat ? stat.modificationTime : Date.now();
-        
-        notes.push({
-          filename,
-          preview,
-          createdAt: new Date(modTime),
-          updatedAt: new Date(modTime),
-          filePath,
-        });
-      }
+      const notesResults = await Promise.all(notePromises);
+      const notes = notesResults.filter(note => note !== null) as NotePreview[];
+      const sortedNotes = notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
       
-      return notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+      // Update cache
+      this.notesCache.set(cacheKey, sortedNotes);
+      this.lastCacheUpdate = Date.now();
+      
+      return sortedNotes;
     } catch (error) {
       console.error('Error reading file system notes:', error);
       return [];
@@ -357,6 +444,14 @@ export class FileSystemService {
       return this.getWebNote(filename);
     }
     
+    // Create cache key for individual note
+    const cacheKey = `note_${filename}_${folderPath || 'root'}`;
+    
+    // Check cache first
+    if (this.isCacheValid() && this.noteContentCache.has(cacheKey)) {
+      return this.noteContentCache.get(cacheKey)!;
+    }
+    
     try {
       // Determine the target directory
       let targetDir: string;
@@ -376,6 +471,8 @@ export class FileSystemService {
         targetDir = rootDir;
       }
       
+      let note: Note;
+      
       if (targetDir.startsWith('content://')) {
         // SAF path
         const fileUri = `${targetDir}/${filename}.md`;
@@ -383,7 +480,7 @@ export class FileSystemService {
         const content = await readFile(fileUri);
         const fileStat = await stat(fileUri);
         
-        return {
+        note = {
           filename,
           content,
           createdAt: new Date(fileStat.lastModified),
@@ -398,7 +495,7 @@ export class FileSystemService {
         
         const modTime = fileStat.exists && 'modificationTime' in fileStat ? fileStat.modificationTime : Date.now();
         
-        return {
+        note = {
           filename,
           content,
           createdAt: new Date(modTime),
@@ -406,6 +503,11 @@ export class FileSystemService {
           filePath,
         };
       }
+      
+      // Cache the note
+      this.noteContentCache.set(cacheKey, note);
+      
+      return note;
     } catch (error) {
       console.error('Error reading note:', error);
       return null;
@@ -476,6 +578,9 @@ export class FileSystemService {
         const filePath = `${targetDir}${note.filename}.md`;
         await FileSystem.writeAsStringAsync(filePath, note.content);
       }
+      
+      // Clear cache after saving
+      this.clearCache();
     } catch (error) {
       console.error('Error saving note:', error);
       throw error;
@@ -544,6 +649,9 @@ export class FileSystemService {
         const filePath = `${targetDir}${id}.md`;
         await FileSystem.deleteAsync(filePath);
       }
+      
+      // Clear cache after deleting
+      this.clearCache();
     } catch (error) {
       console.error('Error deleting note:', error);
       throw error;
@@ -676,56 +784,24 @@ export class FileSystemService {
   private async getSAFDirectoryContents(directoryUri: string, rootPath: string): Promise<DirectoryContents> {
     try {
       const files = await listFiles(directoryUri);
-      const folders: FolderItem[] = [];
-      const notes: NoteItem[] = [];
-      
-      for (const file of files) {
-        if (file.type === 'directory') {
-          folders.push({
-            name: file.name,
-            type: 'folder',
-            path: file.uri,
-            createdAt: new Date(file.lastModified),
-            updatedAt: new Date(file.lastModified),
-          });
-        } else if (file.name.endsWith('.md')) {
-          try {
-            const content = await readFile(file.uri);
-            const filename = file.name.replace('.md', '');
-            const preview = content.substring(0, 200);
-            
-            notes.push({
-              filename,
-              preview,
-              createdAt: new Date(file.lastModified),
-              updatedAt: new Date(file.lastModified),
-              filePath: file.uri,
-              type: 'note',
-            });
-          } catch (fileError) {
-            console.error(`Error reading file ${file.name}:`, fileError);
-          }
-        }
-      }
-      
-      // Sort folders and notes separately
-      folders.sort((a, b) => a.name.localeCompare(b.name));
-      notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-      
-      return {
-        folders,
-        notes,
-        currentPath: directoryUri,
-        parentPath: this.getParentPath(directoryUri, rootPath),
-      };
+      const { folders, markdownFiles } = this.separateFoldersAndMarkdownFiles(files);
+
+      const notes = await this.processMarkdownFiles(markdownFiles, async (file) => {
+        const content = await readFile(file.uri);
+        return {
+          filename: file.name.replace('.md', ''),
+          preview: content.substring(0, 200),
+          createdAt: new Date(file.lastModified),
+          updatedAt: new Date(file.lastModified),
+          filePath: file.uri,
+          type: 'note' as const,
+        };
+      });
+
+      return this.buildDirectoryContents(folders, notes, directoryUri, rootPath);
     } catch (error) {
       console.error('Error reading SAF directory contents:', error);
-      return {
-        folders: [],
-        notes: [],
-        currentPath: directoryUri,
-        parentPath: this.getParentPath(directoryUri, rootPath),
-      };
+      return this.buildEmptyDirectoryContents(directoryUri, rootPath);
     }
   }
 
@@ -735,61 +811,29 @@ export class FileSystemService {
   private async getFileSystemDirectoryContents(currentDir: string, rootPath: string): Promise<DirectoryContents> {
     try {
       const files = await FileSystem.readDirectoryAsync(currentDir);
-      const folders: FolderItem[] = [];
-      const notes: NoteItem[] = [];
-      
-      for (const file of files) {
+      const { folders, markdownFiles } = await this.processRegularFiles(files, currentDir);
+
+      const notes = await this.processMarkdownFiles(markdownFiles, async (file) => {
         const filePath = `${currentDir}${file}`;
-        const stat = await FileSystem.getInfoAsync(filePath);
-        
-        if (stat.exists && stat.isDirectory) {
-          const modTime = 'modificationTime' in stat ? stat.modificationTime : Date.now();
-          folders.push({
-            name: file,
-            type: 'folder',
-            path: filePath + '/',
-            createdAt: new Date(modTime),
-            updatedAt: new Date(modTime),
-          });
-        } else if (file.endsWith('.md')) {
-          try {
-            const content = await FileSystem.readAsStringAsync(filePath);
-            const filename = file.replace('.md', '');
-            const preview = content.substring(0, 200);
-            const modTime = stat.exists && 'modificationTime' in stat ? stat.modificationTime : Date.now();
-            
-            notes.push({
-              filename,
-              preview,
-              createdAt: new Date(modTime),
-              updatedAt: new Date(modTime),
-              filePath,
-              type: 'note',
-            });
-          } catch (fileError) {
-            console.error(`Error reading file ${file}:`, fileError);
-          }
-        }
-      }
-      
-      // Sort folders and notes separately
-      folders.sort((a, b) => a.name.localeCompare(b.name));
-      notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-      
-      return {
-        folders,
-        notes,
-        currentPath: currentDir,
-        parentPath: this.getParentPath(currentDir, rootPath),
-      };
+        const [content, stat] = await Promise.all([
+          FileSystem.readAsStringAsync(filePath),
+          FileSystem.getInfoAsync(filePath),
+        ]);
+        const modTime = stat.exists && 'modificationTime' in stat ? stat.modificationTime : Date.now();
+        return {
+          filename: file.replace('.md', ''),
+          preview: content.substring(0, 200),
+          createdAt: new Date(modTime),
+          updatedAt: new Date(modTime),
+          filePath,
+          type: 'note' as const,
+        };
+      });
+
+      return this.buildDirectoryContents(folders, notes, currentDir, rootPath);
     } catch (error) {
       console.error('Error reading filesystem directory contents:', error);
-      return {
-        folders: [],
-        notes: [],
-        currentPath: currentDir,
-        parentPath: this.getParentPath(currentDir, rootPath),
-      };
+      return this.buildEmptyDirectoryContents(currentDir, rootPath);
     }
   }
 
@@ -825,6 +869,105 @@ export class FileSystemService {
       notes: notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()),
       currentPath: targetPath,
       parentPath: null, // Web implementation doesn't support folder navigation
+    };
+  }
+
+  /**
+   * Helper to separate folders and markdown files
+   */
+  private separateFoldersAndMarkdownFiles(files: any[]): { folders: FolderItem[]; markdownFiles: any[] } {
+    const folders: FolderItem[] = [];
+    const markdownFiles: any[] = [];
+    for (const file of files) {
+      if (file.type === 'directory') {
+        folders.push({
+          name: file.name,
+          type: 'folder',
+          path: file.uri,
+          createdAt: new Date(file.lastModified),
+          updatedAt: new Date(file.lastModified),
+        });
+      } else if (file.name.endsWith('.md')) {
+        markdownFiles.push(file);
+      }
+    }
+    return { folders, markdownFiles };
+  }
+
+  /**
+   * Helper to process markdown files
+   */
+  private async processMarkdownFiles(files: any[], processFile: (file: any) => Promise<NoteItem | null>): Promise<NoteItem[]> {
+    const notePromises = files.map(processFile);
+    const notesResults = await Promise.all(notePromises);
+    return notesResults.filter(note => note !== null) as NoteItem[];
+  }
+
+  /**
+   * Helper to process regular files and find folders
+   */
+  private async processRegularFiles(files: string[], currentDir: string): Promise<{ folders: FolderItem[]; markdownFiles: string[] }> {
+    const folders: FolderItem[] = [];
+    const markdownFiles: string[] = [];
+    const regularFiles: string[] = [];
+
+    for (const file of files) {
+      if (file.endsWith('.md')) {
+        markdownFiles.push(file);
+      } else {
+        regularFiles.push(file);
+      }
+    }
+
+    const folderPromises = regularFiles.map(async (file) => {
+      try {
+        const filePath = `${currentDir}${file}`;
+        const stat = await FileSystem.getInfoAsync(filePath);
+        if (stat.exists && stat.isDirectory) {
+          const modTime = 'modificationTime' in stat ? stat.modificationTime : Date.now();
+          return {
+            name: file,
+            type: 'folder' as const,
+            path: filePath + '/',
+            createdAt: new Date(modTime),
+            updatedAt: new Date(modTime),
+          };
+        }
+        return null;
+      } catch (error) {
+        console.error(`Error processing file ${file}:`, error);
+        return null;
+      }
+    });
+
+    const folderResults = await Promise.all(folderPromises);
+    folders.push(...folderResults.filter(folder => folder !== null) as FolderItem[]);
+    return { folders, markdownFiles };
+  }
+
+  /**
+   * Helper to build directory contents
+   */
+  private buildDirectoryContents(folders: FolderItem[], notes: NoteItem[], currentPath: string, rootPath: string): DirectoryContents {
+    folders.sort((a, b) => a.name.localeCompare(b.name));
+    notes.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+    return {
+      folders,
+      notes,
+      currentPath,
+      parentPath: this.getParentPath(currentPath, rootPath),
+    };
+  }
+
+  /**
+   * Helper to build empty directory contents
+   */
+  private buildEmptyDirectoryContents(currentPath: string, rootPath: string): DirectoryContents {
+    return {
+      folders: [],
+      notes: [],
+      currentPath,
+      parentPath: this.getParentPath(currentPath, rootPath),
     };
   }
 

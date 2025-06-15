@@ -82,17 +82,6 @@ export default function FolderScreen() {
     }, [path])
   );
 
-  // Additional focus effect to update preferences when returning from settings
-  useFocusEffect(
-    useCallback(() => {
-      const updatePreferences = async () => {
-        await fileSystemService.loadUserPreferences();
-        setShowTimestamp(fileSystemService.getShowTimestamps());
-      };
-      updatePreferences();
-    }, [])
-  );
-
   const formatFilenameAsTitle = (filename: string): string => {
     return filename.replace(/\b\w/g, l => l.toUpperCase());
   };
