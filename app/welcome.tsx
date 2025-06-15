@@ -123,9 +123,9 @@ export default function WelcomeScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <FileText size={64} color={colors.accent} style={styles.appIcon} />
-          <Text style={[styles.welcomeTitle, { color: colors.text }]}>Welcome to Notes</Text>
+          <Text style={[styles.welcomeTitle, { color: colors.text }]}>Welcome to Link Notes</Text>
           <Text style={[styles.welcomeSubtitle, { color: colors.textMuted }]}>
-            A markdown-based notes app inspired by Obsidian. Choose where you'd like to store your notes to get started.
+            Link Notes into Obsidian or similar apps with a mobile friendly interface.
           </Text>
         </View>
 
@@ -136,7 +136,6 @@ export default function WelcomeScreen() {
             icon={<Smartphone size={28} color={colors.pine} />}
             title="App Storage"
             description="Store notes in the app's private folder. Notes will be secure and won't clutter your device storage."
-            recommended={true}
             selected={selectedOption === 'app'}
             onPress={handleAppStoragePress}
           />
@@ -146,9 +145,10 @@ export default function WelcomeScreen() {
             title="Custom Folder"
             description={
               Platform.OS === 'android'
-                ? "Choose any folder on your device. You'll have full control over where notes are stored and can easily access them with other apps."
+                ? "Choose any folder on your device. We recommend choosing a folder inside your Obsidian Vault."
                 : "Custom folder selection is only available on Android devices."
             }
+            recommended={true}
             selected={selectedOption === 'custom'}
             onPress={handleCustomStoragePress}
             disabled={Platform.OS !== 'android'}

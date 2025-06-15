@@ -412,14 +412,14 @@ export default function SettingsScreen() {
           <SettingItem
             icon={<Upload size={22} color={colors.textMuted} />}
             title="Export Notes"
-            subtitle="Backup your notes"
+            subtitle="Export your notes to a folder"
             onPress={handleExportNotes}
           />
           
           <SettingItem
             icon={<Download size={22} color={colors.textMuted} />}
             title="Import Notes"
-            subtitle="Import markdown files"
+            subtitle="Import markdown files from a folder"
             onPress={handleImportNotes}
           />
         </View>
