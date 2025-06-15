@@ -26,6 +26,8 @@ import {
 } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { FileSystemService } from '@/services/FileSystemService';
+import { NoteSelector } from '@/components/NoteSelector';
+import { NotePreview } from '@/types/Note';
 
 export default function SettingsScreen() {
   const { theme, setTheme, colors } = useTheme();
@@ -67,6 +69,9 @@ export default function SettingsScreen() {
   const [notesCount, setNotesCount] = useState<number>(0);
   const [storageLocation, setStorageLocation] = useState<string>('');
   const [showTimestamps, setShowTimestamps] = useState<boolean>(true);
+  const [quickNoteUri, setQuickNoteUri] = useState<string | null>(null);
+  const [quickNoteFilename, setQuickNoteFilename] = useState<string | null>(null);
+  const [showNoteSelector, setShowNoteSelector] = useState<boolean>(false);
   const insets = useSafeAreaInsets();
   const fileSystemService = FileSystemService.getInstance();
 
@@ -74,6 +79,7 @@ export default function SettingsScreen() {
     loadNotesCount();
     loadStorageLocation();
     loadTimestampPreference();
+    loadQuickNotePreference();
   }, []);
 
   const loadNotesCount = async () => {
@@ -110,6 +116,37 @@ export default function SettingsScreen() {
     } catch (error) {
       console.error('Error saving timestamp preference:', error);
     }
+  };
+
+  const loadQuickNotePreference = async () => {
+    try {
+      await fileSystemService.loadUserPreferences();
+      const uri = fileSystemService.getQuickNoteUri();
+      const filename = fileSystemService.getQuickNoteFilename();
+      setQuickNoteUri(uri);
+      setQuickNoteFilename(filename);
+    } catch (error) {
+      console.error('Error loading quick note preference:', error);
+    }
+  };
+
+  const handleQuickNoteSelect = async (note: NotePreview | null) => {
+    try {
+      const uri = note ? note.filePath : null;
+      await fileSystemService.setQuickNoteUri(uri);
+      setQuickNoteUri(uri);
+      setQuickNoteFilename(note ? note.filename : null);
+    } catch (error) {
+      console.error('Error saving quick note preference:', error);
+      Alert.alert('Error', 'Failed to save quick note selection');
+    }
+  };
+
+  const getQuickNoteDisplayText = () => {
+    if (!quickNoteFilename) {
+      return 'No quick note selected';
+    }
+    return quickNoteFilename;
   };
 
   const getStorageLocationText = () => {
@@ -406,6 +443,17 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Access</Text>
+          
+          <SettingItem
+            icon={<FileText size={22} color={colors.textMuted} />}
+            title="Quick Note"
+            subtitle={getQuickNoteDisplayText()}
+            onPress={() => setShowNoteSelector(true)}
+          />
+        </View>
+
+        <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Management</Text>
           
           <SettingItem
@@ -452,6 +500,13 @@ export default function SettingsScreen() {
           />
         </View>
       </ScrollView>
+
+      <NoteSelector
+        visible={showNoteSelector}
+        currentQuickNoteUri={quickNoteUri}
+        onClose={() => setShowNoteSelector(false)}
+        onSelectNote={handleQuickNoteSelect}
+      />
     </SafeAreaView>
   );
 }

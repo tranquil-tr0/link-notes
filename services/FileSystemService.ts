@@ -9,11 +9,13 @@ import { DirectoryContents, FolderItem, NoteItem, FileSystemItem } from '@/types
 interface UserPreferences {
   showTimestamps: boolean;
   welcomeCompleted: boolean;
+  quickNoteUri: string | null;
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   showTimestamps: true,
   welcomeCompleted: false,
+  quickNoteUri: null,
 };
 
 /**
@@ -787,6 +789,41 @@ export class FileSystemService {
    */
   async setWelcomeCompleted(completed: boolean): Promise<void> {
     await this.saveUserPreferences({ welcomeCompleted: completed });
+  }
+
+  /**
+   * Get quick note URI
+   */
+  getQuickNoteUri(): string | null {
+    return this.userPreferences.quickNoteUri;
+  }
+
+  /**
+   * Set quick note URI
+   */
+  async setQuickNoteUri(uri: string | null): Promise<void> {
+    await this.saveUserPreferences({ quickNoteUri: uri });
+  }
+
+  /**
+   * Get quick note filename from URI (for display purposes)
+   */
+  getQuickNoteFilename(): string | null {
+    const uri = this.userPreferences.quickNoteUri;
+    if (!uri) return null;
+    
+    // Extract filename from various URI formats
+    if (uri.startsWith('content://')) {
+      // SAF URI - extract filename from the end
+      const parts = uri.split('/');
+      const lastPart = parts[parts.length - 1];
+      return lastPart.replace('.md', '');
+    } else {
+      // Regular file path
+      const parts = uri.split('/');
+      const filename = parts[parts.length - 1];
+      return filename.replace('.md', '');
+    }
   }
 
   /**
