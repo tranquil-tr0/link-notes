@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingTop: 0,
-    borderTopWidth: 1,
+    borderTopWidth: 0,
   },
   timestampText: {
     fontSize: 12,

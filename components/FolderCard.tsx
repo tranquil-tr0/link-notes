@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   frame: {
     borderRadius: RADIUS.large,
     borderWidth: 1,
-    padding: SPACING.largePadding,
+    padding: SPACING.padding,
     shadowOffset: {
       width: 2,
       height: 2,
@@ -77,7 +77,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: SPACING.smallMargin,
-    paddingHorizontal: 4,
+    paddingRight: SPACING.padding,
+    paddingLeft: SPACING.largePadding,
+    paddingTop: SPACING.padding,
   },
   title: {
     fontSize: 16,
@@ -85,23 +87,12 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     flex: 1,
   },
-  folderIndicator: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: RADIUS.small,
-    marginBottom: SPACING.smallMargin,
-  },
-  folderIndicatorText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
   timestamp: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
     paddingTop: SPACING.smallMargin,
-    borderTopWidth: 1,
+    borderTopWidth: 0,
     marginTop: 'auto',
   },
   timestampText: {
