@@ -6,6 +6,7 @@
 
 # Less priority
 - replace initial "no notes" with loading screen instead
+- duplicate notes storage to improve loading time (by not requiring IO to show initial content)
 - settings option for note sorting mode (recent, alphabetical)
 - haptics
 - fix the theme select buttons
