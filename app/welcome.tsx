@@ -160,7 +160,7 @@ export default function WelcomeScreen() {
           <Text style={[styles.infoText, { color: colors.textMuted }]}>
             • Notes are stored as markdown (.md) files{'\n'}
             • You can change this setting later in the app's settings{'\n'}
-            • Your notes will sync automatically when you switch between storage locations
+            • Your notes stay in the folder they are created in, but you can export and import notes if you'd like{'\n'}
           </Text>
         </View>
       </ScrollView>
