@@ -123,6 +123,60 @@ export class FileSystemService {
   }
 
   /**
+   * Parse SAF URI to a user-readable path
+   */
+  private parseSafUriToReadablePath(safUri: string): string {
+    try {
+      // SAF URIs typically look like: content://com.android.externalstorage.documents/tree/primary%3ADocuments%2FNotes
+      // We want to extract the path part and decode it
+      
+      if (!safUri.startsWith('content://')) {
+        return safUri;
+      }
+
+      // Extract the path part after 'tree/'
+      const treeMatch = safUri.match(/\/tree\/(.+)$/);
+      if (!treeMatch) {
+        return 'Custom Folder';
+      }
+
+      let pathPart = treeMatch[1];
+      
+      // Decode URI components
+      pathPart = decodeURIComponent(pathPart);
+      
+      // Handle different storage types
+      if (pathPart.startsWith('primary:')) {
+        // Internal storage
+        const relativePath = pathPart.substring('primary:'.length);
+        return relativePath || 'Internal Storage';
+      } else if (pathPart.includes(':')) {
+        // External storage or other providers
+        const parts = pathPart.split(':');
+        if (parts.length >= 2) {
+          const storageName = parts[0];
+          const relativePath = parts.slice(1).join(':');
+          
+          // Try to make storage names more readable
+          if (storageName.toLowerCase().includes('sd') || storageName.toLowerCase().includes('external')) {
+            return relativePath ? `SD Card/${relativePath}` : 'SD Card';
+          } else if (storageName === 'primary') {
+            return relativePath || 'Internal Storage';
+          } else {
+            return relativePath ? `${storageName}/${relativePath}` : storageName;
+          }
+        }
+      }
+      
+      // Fallback to the decoded path
+      return pathPart || 'Custom Folder';
+    } catch (error) {
+      console.error('Error parsing SAF URI:', error);
+      return 'Custom Folder';
+    }
+  }
+
+  /**
    * Get storage location info for display
    */
   async getStorageLocationInfo(): Promise<{ location: string; type: 'app' | 'public' | 'custom' }> {
@@ -140,7 +194,8 @@ export class FileSystemService {
     }
 
     if (currentDir.startsWith('content://')) {
-      return { location: 'User-Selected Folder (SAF)', type: 'custom' };
+      const readablePath = this.parseSafUriToReadablePath(currentDir);
+      return { location: readablePath, type: 'custom' };
     }
 
     if (currentDir.includes('Documents/Notes')) {

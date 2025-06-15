@@ -314,7 +314,7 @@ export default function SettingsScreen() {
               <HardDrive size={28} color={colors.pine} />
               <View style={styles.statContent}>
                 <Text style={[styles.statValue, { color: colors.text }]}>
-                  {Platform.OS === 'web' ? 'Browser' : 'Device'}
+                  {getStorageLocationText()}
                 </Text>
                 <Text style={[styles.statLabel, { color: colors.textMuted }]}>Storage Location</Text>
               </View>
