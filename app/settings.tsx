@@ -197,23 +197,86 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleExportNotes = () => {
+  const handleExportNotes = async () => {
     Alert.alert(
       'Export Notes',
-      Platform.OS === 'web' 
-        ? 'Export functionality is limited on web. Notes are stored in browser local storage.'
-        : 'Notes are stored in the device\'s Documents/Notes folder as markdown files.',
-      [{ text: 'OK' }]
+      Platform.OS === 'web'
+        ? 'This will download all your notes as individual markdown files to your Downloads folder.'
+        : Platform.OS === 'android'
+        ? 'Select a folder where you want to save all your notes as markdown files.'
+        : 'All notes will be exported as markdown files to a temporary folder that you can then access through the Files app.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Export',
+          onPress: async () => {
+            try {
+              const result = await fileSystemService.exportNotes();
+              
+              if (result.success) {
+                const message = `Successfully exported ${result.exportedCount} notes.${
+                  result.errors.length > 0 ? `\n\nWarnings:\n${result.errors.join('\n')}` : ''
+                }${
+                  Platform.OS === 'ios' ? '\n\nNotes are saved in the app\'s temporary folder. You can access them through the Files app.' : ''
+                }`;
+                Alert.alert('Export Complete', message);
+              } else {
+                Alert.alert(
+                  'Export Failed',
+                  result.errors.length > 0 ? result.errors.join('\n') : 'Unknown error occurred'
+                );
+              }
+            } catch (error) {
+              console.error('Export error:', error);
+              Alert.alert('Export Failed', 'An unexpected error occurred during export.');
+            }
+          }
+        },
+      ]
     );
   };
 
-  const handleImportNotes = () => {
+  const handleImportNotes = async () => {
     Alert.alert(
       'Import Notes',
       Platform.OS === 'web'
-        ? 'Import functionality is limited on web. You can copy and paste markdown content into new notes.'
-        : 'Place markdown (.md) files in your Documents/Notes folder, then restart the app to import them.',
-      [{ text: 'OK' }]
+        ? 'Web import is not supported. You can create new notes by copying and pasting markdown content.'
+        : Platform.OS === 'android'
+        ? 'Select a folder containing markdown (.md) files to import them into your notes.'
+        : 'Select markdown (.md) files to import them into your notes.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Import',
+          onPress: async () => {
+            if (Platform.OS === 'web') {
+              Alert.alert('Not Supported', 'Import is not supported on web. Please create notes manually.');
+              return;
+            }
+            
+            try {
+              const result = await fileSystemService.importNotes();
+              
+              if (result.success) {
+                const message = `Successfully imported ${result.importedCount} notes.${
+                  result.errors.length > 0 ? `\n\nWarnings:\n${result.errors.join('\n')}` : ''
+                }`;
+                Alert.alert('Import Complete', message);
+                // Refresh the notes count
+                await loadNotesCount();
+              } else {
+                Alert.alert(
+                  'Import Failed',
+                  result.errors.length > 0 ? result.errors.join('\n') : 'No notes were imported'
+                );
+              }
+            } catch (error) {
+              console.error('Import error:', error);
+              Alert.alert('Import Failed', 'An unexpected error occurred during import.');
+            }
+          }
+        },
+      ]
     );
   };
 

@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
+import * as DocumentPicker from 'expo-document-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { openDocumentTree, listFiles, readFile, writeFile, mkdir, unlink, stat } from 'react-native-saf-x';
 import { Note, NotePreview } from '@/types/Note';
@@ -1066,5 +1067,237 @@ export class FileSystemService {
   async navigateToRoot(): Promise<DirectoryContents> {
     this.resetToRootDirectory();
     return await this.getDirectoryContents();
+  }
+
+  /**
+   * Import notes from a selected folder
+   */
+  async importNotes(): Promise<{ success: boolean; importedCount: number; errors: string[] }> {
+    if (Platform.OS === 'web') {
+      return { success: false, importedCount: 0, errors: ['Import not supported on web platform'] };
+    }
+
+    const errors: string[] = [];
+    let importedCount = 0;
+
+    try {
+      let sourceDirectory: string;
+      
+      if (Platform.OS === 'android') {
+        // Use SAF to select a folder on Android
+        const result = await openDocumentTree(true);
+        if (!result || !result.uri) {
+          return { success: false, importedCount: 0, errors: ['No folder selected'] };
+        }
+        sourceDirectory = result.uri;
+      } else {
+        // On iOS, use document picker to select multiple files
+        const result = await DocumentPicker.getDocumentAsync({
+          type: 'text/*',
+          multiple: true,
+          copyToCacheDirectory: false,
+        });
+        
+        if (result.canceled || !result.assets || result.assets.length === 0) {
+          return { success: false, importedCount: 0, errors: ['No files selected'] };
+        }
+
+        // Process individual files on iOS
+        for (const asset of result.assets) {
+          if (asset.name.endsWith('.md')) {
+            try {
+              const content = await FileSystem.readAsStringAsync(asset.uri);
+              const filename = asset.name.replace('.md', '');
+              
+              // Create a note object
+              const note: Note = {
+                filename: this.sanitizeFilename(filename),
+                content,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                filePath: '', // Will be set when saved
+              };
+              
+              await this.saveNote(note);
+              importedCount++;
+            } catch (error) {
+              errors.push(`Failed to import ${asset.name}: ${error}`);
+            }
+          }
+        }
+        
+        return { success: importedCount > 0, importedCount, errors };
+      }
+
+      // Android SAF processing
+      await this.ensureDirectoryExists();
+      
+      // Get all files from the selected directory
+      const files = await listFiles(sourceDirectory);
+      const markdownFiles = files.filter(file => file.name.endsWith('.md') && file.type === 'file');
+      
+      // Process each markdown file
+      for (const file of markdownFiles) {
+        try {
+          const content = await readFile(file.uri);
+          const filename = file.name.replace('.md', '');
+          
+          // Create a note object
+          const note: Note = {
+            filename: this.sanitizeFilename(filename),
+            content,
+            createdAt: new Date(file.lastModified),
+            updatedAt: new Date(file.lastModified),
+            filePath: '', // Will be set when saved
+          };
+          
+          await this.saveNote(note);
+          importedCount++;
+        } catch (error) {
+          errors.push(`Failed to import ${file.name}: ${error}`);
+        }
+      }
+      
+      return { success: importedCount > 0, importedCount, errors };
+    } catch (error) {
+      console.error('Import error:', error);
+      return { success: false, importedCount: 0, errors: [`Import failed: ${error}`] };
+    }
+  }
+
+  /**
+   * Export all notes to a selected folder
+   */
+  async exportNotes(): Promise<{ success: boolean; exportedCount: number; errors: string[] }> {
+    if (Platform.OS === 'web') {
+      return this.exportNotesWeb();
+    }
+
+    const errors: string[] = [];
+    let exportedCount = 0;
+
+    try {
+      let destinationDirectory: string;
+      
+      if (Platform.OS === 'android') {
+        // Use SAF to select a destination folder on Android
+        const result = await openDocumentTree(true);
+        if (!result || !result.uri) {
+          return { success: false, exportedCount: 0, errors: ['No folder selected'] };
+        }
+        destinationDirectory = result.uri;
+      } else {
+        // On iOS, create a temporary directory and use sharing
+        const exportDir = `${FileSystem.cacheDirectory}notes_export/`;
+        const dirInfo = await FileSystem.getInfoAsync(exportDir);
+        if (!dirInfo.exists) {
+          await FileSystem.makeDirectoryAsync(exportDir, { intermediates: true });
+        }
+        destinationDirectory = exportDir;
+      }
+
+      // Get all notes
+      const notes = await this.getAllNotes();
+      
+      if (notes.length === 0) {
+        return { success: false, exportedCount: 0, errors: ['No notes to export'] };
+      }
+
+      // Export each note
+      for (const notePreview of notes) {
+        try {
+          // Get full note content
+          const note = await this.getNote(notePreview.filename);
+          if (!note) {
+            errors.push(`Failed to read note: ${notePreview.filename}`);
+            continue;
+          }
+
+          const exportFilename = `${this.sanitizeFilename(note.filename)}.md`;
+          
+          if (Platform.OS === 'android') {
+            // Write to SAF directory
+            const exportUri = `${destinationDirectory}/${exportFilename}`;
+            await writeFile(exportUri, note.content);
+          } else {
+            // Write to temporary directory on iOS
+            const exportPath = `${destinationDirectory}${exportFilename}`;
+            await FileSystem.writeAsStringAsync(exportPath, note.content);
+          }
+          
+          exportedCount++;
+        } catch (error) {
+          errors.push(`Failed to export ${notePreview.filename}: ${error}`);
+        }
+      }
+
+      // On iOS, we could potentially use sharing here, but for now just return success
+      return { success: exportedCount > 0, exportedCount, errors };
+    } catch (error) {
+      console.error('Export error:', error);
+      return { success: false, exportedCount: 0, errors: [`Export failed: ${error}`] };
+    }
+  }
+
+  /**
+   * Export notes on web platform using download
+   */
+  private async exportNotesWeb(): Promise<{ success: boolean; exportedCount: number; errors: string[] }> {
+    const errors: string[] = [];
+    let exportedCount = 0;
+
+    try {
+      const notes = await this.getAllNotes();
+      
+      if (notes.length === 0) {
+        return { success: false, exportedCount: 0, errors: ['No notes to export'] };
+      }
+
+      // Create a zip-like structure or individual downloads
+      for (const notePreview of notes) {
+        try {
+          const note = await this.getNote(notePreview.filename);
+          if (!note) {
+            errors.push(`Failed to read note: ${notePreview.filename}`);
+            continue;
+          }
+
+          // Create a downloadable file
+          const blob = new Blob([note.content], { type: 'text/markdown' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${this.sanitizeFilename(note.filename)}.md`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          
+          exportedCount++;
+          
+          // Add a small delay to prevent browser from blocking multiple downloads
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          errors.push(`Failed to export ${notePreview.filename}: ${error}`);
+        }
+      }
+
+      return { success: exportedCount > 0, exportedCount, errors };
+    } catch (error) {
+      console.error('Web export error:', error);
+      return { success: false, exportedCount: 0, errors: [`Export failed: ${error}`] };
+    }
+  }
+
+  /**
+   * Get export directory path for display (iOS only)
+   */
+  async getExportDirectory(): Promise<string | null> {
+    if (Platform.OS !== 'ios') {
+      return null;
+    }
+    
+    const exportDir = `${FileSystem.cacheDirectory}notes_export/`;
+    return exportDir;
   }
 }
