@@ -345,8 +345,14 @@ export default function SettingsScreen() {
   );
 
   return (
-    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }, { paddingTop: insets.top }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }]}>
+      <View style={[styles.header, {
+        backgroundColor: colors.surface,
+        borderBottomColor: colors.border,
+        paddingTop: insets.top,
+        paddingHorizontal: 20,
+        paddingVertical: 16
+      }]}>
         <TouchableOpacity
           style={[styles.backButton, { backgroundColor: colors.overlay }]}
           onPress={handleBackPress}
@@ -460,8 +466,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
     shadowColor: '#000',

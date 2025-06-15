@@ -222,8 +222,14 @@ export default function FolderScreen() {
   };
 
   return (
-    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }, { paddingTop: insets.top }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }]}>
+      <View style={[styles.header, {
+        backgroundColor: colors.surface,
+        borderBottomColor: colors.border,
+        paddingTop: insets.top,
+        paddingBottom: 16,
+        paddingHorizontal: 20
+      }]}>
         <View style={styles.headerTop}>
           <Text style={[styles.title, { color: colors.text }]}>{getCurrentFolderName()}</Text>
           <View style={styles.headerActions}>
@@ -332,8 +338,6 @@ export default function FolderScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
     borderBottomWidth: 1,
     shadowColor: '#000',
     shadowOffset: {

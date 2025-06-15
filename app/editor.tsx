@@ -267,8 +267,12 @@ export default function EditorScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, {
+        backgroundColor: colors.surface,
+        borderBottomColor: colors.border,
+        paddingTop: insets.top,
+      }]}>
         <TouchableOpacity onPress={handleBackPress} style={[styles.iconButton, { backgroundColor: colors.overlay }]}>
           <ArrowLeft size={24} color={colors.iris} />
         </TouchableOpacity>

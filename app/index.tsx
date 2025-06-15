@@ -219,7 +219,7 @@ export default function HomeScreen() {
   // Show loading while checking welcome status
   if (checkingWelcome) {
     return (
-      <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }, { paddingTop: insets.top }]}>
+      <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }]}>
         <View style={styles.emptyState}>
           <Text style={[styles.emptyStateText, { color: colors.textMuted }]}>Loading...</Text>
         </View>
@@ -228,8 +228,14 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }, { paddingTop: insets.top }]}>
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+    <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }]}>
+      <View style={[styles.header, {
+        backgroundColor: colors.surface,
+        borderBottomColor: colors.border,
+        paddingTop: insets.top,
+        paddingBottom: 16,
+        paddingHorizontal: 20
+      }]}>
         <View style={styles.headerTop}>
           <Text style={[styles.title, { color: colors.text }]}>Notes</Text>
           <View style={styles.headerActions}>
@@ -338,8 +344,6 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
     borderBottomWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
