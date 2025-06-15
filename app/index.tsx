@@ -182,11 +182,11 @@ export default function HomeScreen() {
               <Settings size={24} color={colors.textMuted} />
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: colors.foam }]}
+              style={[styles.headerButton, { backgroundColor: colors.accent }]}
               onPress={handleCreateNote}
               activeOpacity={0.7}
             >
-              <Plus size={24} color={colors.text} />
+              <Plus size={24} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
         </View>
@@ -243,16 +243,10 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
   header: {
-    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -270,7 +264,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1f2937',
     letterSpacing: -0.5,
   },
   headerActions: {
@@ -281,7 +274,6 @@ const styles = StyleSheet.create({
   headerButton: {
     padding: 10,
     borderRadius: 12,
-    backgroundColor: '#f3f4f6',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -291,21 +283,15 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  createButton: {
-    backgroundColor: '#3b82f6',
-  },
   searchContainer: {
     marginTop: 16,
   },
   searchInput: {
     height: 44,
-    backgroundColor: '#f8fafc',
     borderRadius: 12,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#1f2937',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
   },
   content: {
     flex: 1,
@@ -319,13 +305,11 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#6b7280',
     textAlign: 'center',
     marginBottom: 8,
   },
   emptyStateSubtext: {
     fontSize: 16,
-    color: '#9ca3af',
     textAlign: 'center',
     lineHeight: 24,
   },

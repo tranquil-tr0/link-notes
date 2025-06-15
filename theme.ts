@@ -20,6 +20,7 @@ const ROSE_PINE_COLORS = {
     muted: '#6e6a86',
     subtle: '#908caa',
     text: '#e0def4',
+    contrast: '#59527d',
     love: '#eb6f92',
     gold: '#f6c177',
     rose: '#ebbcba',
@@ -38,6 +39,7 @@ const ROSE_PINE_COLORS = {
     muted: '#6e6a86',
     subtle: '#908caa',
     text: '#e0def4',
+    contrast: '#59527d',
     love: '#eb6f92',
     gold: '#f6c177',
     rose: '#ea9a97',
@@ -56,9 +58,11 @@ const ROSE_PINE_COLORS = {
     muted: '#9893a5',
     subtle: '#797593',
     text: '#575279',
+    contrast: '#d4c7bc',
     love: '#b4637a',
     gold: '#ea9d34',
     rose: '#d7827e',
+    accentRose: '#e8a3a0',
     pine: '#286983',
     foam: '#56949f',
     iris: '#907aa9',
@@ -101,13 +105,7 @@ export const THEMES = {
       highlightLow: ROSE_PINE_COLORS.main.highlightLow,
       highlightMed: ROSE_PINE_COLORS.main.highlightMed,
       highlightHigh: ROSE_PINE_COLORS.main.highlightHigh,
-      border: ROSE_PINE_COLORS.main.highlightMed,
-      
-      // Legacy compatibility
-      elementbackground: ROSE_PINE_COLORS.main.surface,
-      secondbackground: ROSE_PINE_COLORS.main.overlay,
-      shadow: ROSE_PINE_COLORS.main.base,
-      outline: ROSE_PINE_COLORS.main.highlightMed,
+      border: ROSE_PINE_COLORS.main.contrast,
     },
     dark: true,
   },
@@ -142,13 +140,7 @@ export const THEMES = {
       highlightLow: ROSE_PINE_COLORS.moon.highlightLow,
       highlightMed: ROSE_PINE_COLORS.moon.highlightMed,
       highlightHigh: ROSE_PINE_COLORS.moon.highlightHigh,
-      border: ROSE_PINE_COLORS.moon.highlightMed,
-      
-      // Legacy compatibility
-      elementbackground: ROSE_PINE_COLORS.moon.surface,
-      secondbackground: ROSE_PINE_COLORS.moon.overlay,
-      shadow: ROSE_PINE_COLORS.moon.base,
-      outline: ROSE_PINE_COLORS.moon.highlightMed,
+      border: ROSE_PINE_COLORS.moon.contrast,
     },
     dark: true,
   },
@@ -168,7 +160,7 @@ export const THEMES = {
       textMuted: ROSE_PINE_COLORS.dawn.muted,
       
       // Interactive elements
-      accent: ROSE_PINE_COLORS.dawn.rose,
+      accent: ROSE_PINE_COLORS.dawn.accentRose,
       accentSecondary: ROSE_PINE_COLORS.dawn.iris,
       
       // Status colors
@@ -183,20 +175,11 @@ export const THEMES = {
       highlightLow: ROSE_PINE_COLORS.dawn.highlightLow,
       highlightMed: ROSE_PINE_COLORS.dawn.highlightMed,
       highlightHigh: ROSE_PINE_COLORS.dawn.highlightHigh,
-      border: ROSE_PINE_COLORS.dawn.highlightMed,
-      
-      // Legacy compatibility
-      elementbackground: ROSE_PINE_COLORS.dawn.surface,
-      secondbackground: ROSE_PINE_COLORS.dawn.overlay,
-      shadow: ROSE_PINE_COLORS.dawn.base,
-      outline: ROSE_PINE_COLORS.dawn.highlightMed,
+      border: ROSE_PINE_COLORS.dawn.contrast,
     },
     dark: false,
   },
 } as const;
-
-// Legacy COLORS export for backward compatibility
-export const COLORS = THEMES.rosePine.colors;
 
 // Types
 export type ThemeName = keyof typeof THEMES;

@@ -69,7 +69,7 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
       {/* Frame around text and timestamp */}
       <View style={[styles.frame, {
         backgroundColor: colors.surface,
-        borderColor: colors.border
+        borderColor: colors.border,
       }]}>
         {/* Title */}
         <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
@@ -78,7 +78,7 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
         
         {/* Text Display */}
         <Text style={[styles.textDisplay, {
-          backgroundColor: colors.overlay,
+          backgroundColor: colors.surface,
           color: colors.text
         }]} numberOfLines={10}>
           {truncateText(note.preview || '')}
@@ -103,14 +103,13 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.large,
     borderWidth: 1,
     padding: SPACING.padding,
-    // shadowColor: COLORS.shadow,
-    // shadowOffset: {
-    //   width: 0,
-    //   height: 2,
-    // },
-    // shadowOpacity: 0.1,
-    // shadowRadius: RADIUS.large,
-    // elevation: 3,
+    shadowOffset: {
+      width: 2,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: RADIUS.large,
+    elevation: 3,
   },
   title: {
     fontSize: 16,
