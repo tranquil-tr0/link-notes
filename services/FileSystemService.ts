@@ -7,10 +7,44 @@ import { DirectoryContents, FolderItem, NoteItem, FileSystemItem } from '@/types
 
 interface UserPreferences {
   showTimestamps: boolean;
+  welcomeCompleted: boolean;
 }
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   showTimestamps: true,
+  welcomeCompleted: false,
+};
+
+/**
+ * Wrapper for AsyncStorage operations with timeout protection
+ */
+const asyncStorageWithTimeout = {
+  async getItem(key: string, timeoutMs: number = 5000): Promise<string | null> {
+    return Promise.race([
+      AsyncStorage.getItem(key),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`AsyncStorage.getItem timeout for key: ${key}`)), timeoutMs)
+      )
+    ]);
+  },
+  
+  async setItem(key: string, value: string, timeoutMs: number = 5000): Promise<void> {
+    return Promise.race([
+      AsyncStorage.setItem(key, value),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`AsyncStorage.setItem timeout for key: ${key}`)), timeoutMs)
+      )
+    ]);
+  },
+  
+  async removeItem(key: string, timeoutMs: number = 5000): Promise<void> {
+    return Promise.race([
+      AsyncStorage.removeItem(key),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`AsyncStorage.removeItem timeout for key: ${key}`)), timeoutMs)
+      )
+    ]);
+  }
 };
 
 export class FileSystemService {
@@ -76,14 +110,19 @@ export class FileSystemService {
    */
   async setCustomDirectory(directory: string): Promise<void> {
     this.customDirectory = directory;
-    this.directoryPreferenceCache = directory;
+    this.directoryPreferenceCache = directory || null;
     
     // Clear cache since directory changed
     this.clearCache();
     
     // Save the preference for persistence
     try {
-      await AsyncStorage.setItem('notes_directory_preference', directory);
+      if (directory) {
+        await asyncStorageWithTimeout.setItem('notes_directory_preference', directory);
+      } else {
+        // Remove the preference to use default app storage
+        await asyncStorageWithTimeout.removeItem('notes_directory_preference');
+      }
     } catch (error) {
       console.error('Failed to save directory preference:', error);
     }
@@ -116,8 +155,11 @@ export class FileSystemService {
    * Load the saved directory preference (cached)
    */
   async loadDirectoryPreference(): Promise<void> {
+    ;
+    
     // Return cached result if already loaded
     if (this.directoryPreferenceCache !== undefined) {
+      ;
       if (this.directoryPreferenceCache !== null) {
         this.customDirectory = this.directoryPreferenceCache;
       }
@@ -130,15 +172,20 @@ export class FileSystemService {
     }
     
     try {
-      const savedDirectory = await AsyncStorage.getItem('notes_directory_preference');
+      
+      const savedDirectory = await asyncStorageWithTimeout.getItem('notes_directory_preference');
+      ;
+      
       if (savedDirectory) {
+        ;
         this.customDirectory = savedDirectory;
         this.directoryPreferenceCache = savedDirectory;
       } else {
         this.directoryPreferenceCache = null;
       }
     } catch (error) {
-      console.log('No saved directory preference');
+      ;
+      console.warn('AsyncStorage failed to load directory preference, using defaults');
       this.directoryPreferenceCache = null;
     }
   }
@@ -675,13 +722,21 @@ export class FileSystemService {
    * Load user preferences from storage
    */
   async loadUserPreferences(): Promise<void> {
+    ;
     try {
-      const preferencesData = await AsyncStorage.getItem('user_preferences');
+      
+      const preferencesData = await asyncStorageWithTimeout.getItem('user_preferences');
+      ;
+      
       if (preferencesData) {
         this.userPreferences = { ...DEFAULT_PREFERENCES, ...JSON.parse(preferencesData) };
+        ;
+      } else {
+        this.userPreferences = DEFAULT_PREFERENCES;
       }
     } catch (error) {
-      console.log('No saved preferences, using defaults');
+      ;
+      console.warn('AsyncStorage failed to load user preferences, using defaults');
       this.userPreferences = DEFAULT_PREFERENCES;
     }
   }
@@ -692,7 +747,7 @@ export class FileSystemService {
   async saveUserPreferences(preferences: Partial<UserPreferences>): Promise<void> {
     try {
       this.userPreferences = { ...this.userPreferences, ...preferences };
-      await AsyncStorage.setItem('user_preferences', JSON.stringify(this.userPreferences));
+      await asyncStorageWithTimeout.setItem('user_preferences', JSON.stringify(this.userPreferences));
     } catch (error) {
       console.error('Failed to save user preferences:', error);
     }
@@ -717,6 +772,20 @@ export class FileSystemService {
    */
   async setShowTimestamps(show: boolean): Promise<void> {
     await this.saveUserPreferences({ showTimestamps: show });
+  }
+
+  /**
+   * Check if welcome screen has been completed
+   */
+  getWelcomeCompleted(): boolean {
+    return this.userPreferences.welcomeCompleted;
+  }
+
+  /**
+   * Set welcome screen completion status
+   */
+  async setWelcomeCompleted(completed: boolean): Promise<void> {
+    await this.saveUserPreferences({ welcomeCompleted: completed });
   }
 
   /**

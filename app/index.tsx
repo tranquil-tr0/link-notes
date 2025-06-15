@@ -28,6 +28,7 @@ export default function HomeScreen() {
     currentPath: '',
     parentPath: null,
   });
+  const [checkingWelcome, setCheckingWelcome] = useState(true);
   const [filteredContents, setFilteredContents] = useState<DirectoryContents>({
     folders: [],
     notes: [],
@@ -42,6 +43,27 @@ export default function HomeScreen() {
   const { colors } = useTheme();
 
   const fileSystemService = FileSystemService.getInstance();
+
+  // Check if welcome needs to be shown
+  useEffect(() => {
+    const checkWelcome = async () => {
+      try {
+        await fileSystemService.loadUserPreferences();
+        const welcomeCompleted = fileSystemService.getWelcomeCompleted();
+        
+        if (!welcomeCompleted) {
+          router.replace('/welcome');
+          return;
+        }
+      } catch (error) {
+        router.replace('/welcome');
+        return;
+      }
+      setCheckingWelcome(false);
+    };
+
+    checkWelcome();
+  }, []);
 
   const loadDirectoryContents = async () => {
     setLoading(true);
@@ -193,6 +215,17 @@ export default function HomeScreen() {
   const handleSettingsPress = () => {
     router.push('/settings');
   };
+
+  // Show loading while checking welcome status
+  if (checkingWelcome) {
+    return (
+      <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }, { paddingTop: insets.top }]}>
+        <View style={styles.emptyState}>
+          <Text style={[styles.emptyStateText, { color: colors.textMuted }]}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[{ flex: 1, backgroundColor: colors.background }, { paddingTop: insets.top }]}>
