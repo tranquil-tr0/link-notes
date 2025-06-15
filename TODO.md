@@ -9,6 +9,7 @@
 - replace initial "no notes" with loading screen instead
 - settings option for note sorting mode (recent, alphabetical)
 - haptics
+- fix the theme select buttons
 
 # Polish
 - consider forking markdown editor or making an editor or whatever else (better editor)
