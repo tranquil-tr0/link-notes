@@ -22,3 +22,4 @@
 - look into optimizing start times
 - consider setting to not show note title if it starts with "Untitled"
 - make haptics configurable
+- make radius and spacing a part of theme instead of separate
