@@ -34,10 +34,10 @@ export default function FolderScreen() {
     currentPath: '',
     parentPath: null,
   });
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchVisible, setIsSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');  const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showTimestamp, setShowTimestamp] = useState(true);
+  const [fabPositionBottom, setFabPositionBottom] = useState(false);
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
@@ -78,11 +78,25 @@ export default function FolderScreen() {
       setLoading(false);
     }
   };
-
   useFocusEffect(
     useCallback(() => {
       loadDirectoryContents();
     }, [path])
+  );
+
+  // Load FAB position preference
+  useFocusEffect(
+    useCallback(() => {
+      const loadFabPositionPreference = async () => {
+        try {
+          const fabPosition = await fileSystemService.getFabPositionBottom();
+          setFabPositionBottom(fabPosition);
+        } catch (error) {
+          console.error('Error loading FAB position preference:', error);
+        }
+      };
+      loadFabPositionPreference();
+    }, [])
   );
 
   const formatFilenameAsTitle = (filename: string): string => {
@@ -265,21 +279,22 @@ export default function FolderScreen() {
               ) : (
                 <Search size={24} color={colors.textMuted} />
               )}
-            </TouchableOpacity>
-            <TouchableOpacity
+            </TouchableOpacity>            <TouchableOpacity
               style={[styles.headerButton, { backgroundColor: colors.overlay }]}
               onPress={handleSettingsPress}
               activeOpacity={0.7}
             >
               <Settings size={24} color={colors.textMuted} />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: colors.accent }]}
-              onPress={handleCreateNote}
-              activeOpacity={0.7}
-            >
-              <Plus size={24} color={colors.textMuted} />
-            </TouchableOpacity>
+            {!fabPositionBottom && (
+              <TouchableOpacity
+                style={[styles.headerButton, { backgroundColor: colors.accent }]}
+                onPress={handleCreateNote}
+                activeOpacity={0.7}
+              >
+                <Plus size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
         
@@ -350,10 +365,22 @@ export default function FolderScreen() {
               ))
             ]}
             numColumns={2}
-            spacing={16}
-          />
+            spacing={16}          />
         )}
       </View>
+
+      {fabPositionBottom && (
+        <TouchableOpacity
+          style={[styles.floatingActionButton, { 
+            backgroundColor: colors.accent,
+            bottom: insets.bottom + 20,
+          }]}
+          onPress={handleCreateNote}
+          activeOpacity={0.7}
+        >
+          <Plus size={28} color={colors.background} />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -426,5 +453,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  floatingActionButton: {
+    position: 'absolute',
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
   },
 });

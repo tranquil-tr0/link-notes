@@ -12,6 +12,7 @@ const PREFERENCE_KEYS = {
   WELCOME_COMPLETED: 'user_preference_welcomeCompleted',
   QUICK_NOTE_URI: 'user_preference_quickNoteUri',
   AUTO_SAVE_ON_EXIT: 'user_preference_autoSaveOnExit',
+  FAB_POSITION_BOTTOM: 'user_preference_fabPositionBottom',
 } as const;
 
 // Default values
@@ -20,6 +21,7 @@ const DEFAULT_VALUES = {
   WELCOME_COMPLETED: false,
   QUICK_NOTE_URI: null,
   AUTO_SAVE_ON_EXIT: true,
+  FAB_POSITION_BOTTOM: true,
 } as const;
 
 /**
@@ -723,7 +725,6 @@ export class FileSystemService {
       console.error('Error deleting web note:', error);
     }
   }
-
   /**
    * Get current user preferences (reconstructed from individual keys)
    */
@@ -732,12 +733,14 @@ export class FileSystemService {
     welcomeCompleted: boolean;
     quickNoteUri: string | null;
     autoSaveOnExit: boolean;
+    fabPositionBottom: boolean;
   }> {
     return {
       showTimestamps: await this.getShowTimestamps(),
       welcomeCompleted: await this.getWelcomeCompleted(),
       quickNoteUri: await this.getQuickNoteUri(),
       autoSaveOnExit: await this.getAutoSaveOnExit(),
+      fabPositionBottom: await this.getFabPositionBottom(),
     };
   }
 
@@ -824,7 +827,6 @@ export class FileSystemService {
       return DEFAULT_VALUES.AUTO_SAVE_ON_EXIT;
     }
   }
-
   /**
    * Set auto-save on exit preference
    */
@@ -833,6 +835,30 @@ export class FileSystemService {
       await asyncStorageWithTimeout.setItem(PREFERENCE_KEYS.AUTO_SAVE_ON_EXIT, JSON.stringify(autoSave));
     } catch (error) {
       console.error('Failed to save autoSaveOnExit preference:', error);
+    }
+  }
+
+  /**
+   * Get FAB position preference (bottom vs top)
+   */
+  async getFabPositionBottom(): Promise<boolean> {
+    try {
+      const value = await asyncStorageWithTimeout.getItem(PREFERENCE_KEYS.FAB_POSITION_BOTTOM);
+      return value !== null ? JSON.parse(value) : DEFAULT_VALUES.FAB_POSITION_BOTTOM;
+    } catch (error) {
+      console.warn('Failed to load fabPositionBottom preference, using default');
+      return DEFAULT_VALUES.FAB_POSITION_BOTTOM;
+    }
+  }
+
+  /**
+   * Set FAB position preference (bottom vs top)
+   */
+  async setFabPositionBottom(positionBottom: boolean): Promise<void> {
+    try {
+      await asyncStorageWithTimeout.setItem(PREFERENCE_KEYS.FAB_POSITION_BOTTOM, JSON.stringify(positionBottom));
+    } catch (error) {
+      console.error('Failed to save fabPositionBottom preference:', error);
     }
   }
 

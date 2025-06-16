@@ -37,9 +37,9 @@ export default function HomeScreen() {
     parentPath: null,
   });
   const [searchQuery, setSearchQuery] = useState('');
-  const [isSearchVisible, setIsSearchVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isSearchVisible, setIsSearchVisible] = useState(false);  const [loading, setLoading] = useState(false);
   const [showTimestamp, setShowTimestamp] = useState(true);
+  const [fabPositionBottom, setFabPositionBottom] = useState(false);
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
@@ -86,10 +86,24 @@ export default function HomeScreen() {
       setLoading(false);
     }
   };
-
   useFocusEffect(
     useCallback(() => {
       loadDirectoryContents();
+    }, [])
+  );
+
+  // Load FAB position preference
+  useFocusEffect(
+    useCallback(() => {
+      const loadFabPositionPreference = async () => {
+        try {
+          const fabPosition = await fileSystemService.getFabPositionBottom();
+          setFabPositionBottom(fabPosition);
+        } catch (error) {
+          console.error('Error loading FAB position preference:', error);
+        }
+      };
+      loadFabPositionPreference();
     }, [])
   );
 
@@ -269,21 +283,22 @@ export default function HomeScreen() {
               ) : (
                 <Search size={24} color={colors.textMuted} />
               )}
-            </TouchableOpacity>
-            <TouchableOpacity
+            </TouchableOpacity>            <TouchableOpacity
               style={[styles.headerButton, { backgroundColor: colors.overlay }]}
               onPress={handleSettingsPress}
               activeOpacity={0.7}
             >
               <Settings size={24} color={colors.textMuted} />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.headerButton, { backgroundColor: colors.accent }]}
-              onPress={handleCreateNote}
-              activeOpacity={0.7}
-            >
-              <Plus size={24} color={colors.textMuted} />
-            </TouchableOpacity>
+            {!fabPositionBottom && (
+              <TouchableOpacity
+                style={[styles.headerButton, { backgroundColor: colors.accent }]}
+                onPress={handleCreateNote}
+                activeOpacity={0.7}
+              >
+                <Plus size={24} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
         
@@ -354,10 +369,23 @@ export default function HomeScreen() {
               ))
             ]}
             numColumns={2}
-            spacing={SPACING.margin}
-          />
+            spacing={SPACING.margin}          />
         )}
       </View>
+
+      {fabPositionBottom && (
+        <TouchableOpacity
+          style={[styles.floatingActionButton, { 
+            backgroundColor: colors.accent,
+            bottom: insets.bottom + 20,
+            right: insets.bottom + 15,
+          }]}
+          onPress={handleCreateNote}
+          activeOpacity={0.7}
+        >
+          <Plus size={32} color={colors.background} />
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   );
 }
@@ -425,10 +453,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 8,
-  },
-  emptyStateSubtext: {
+  },  emptyStateSubtext: {
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
+  },
+  floatingActionButton: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
   },
 });

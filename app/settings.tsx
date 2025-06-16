@@ -25,6 +25,7 @@ import {
   HardDrive,
   Clock,
   Save,
+  Plus,
 } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { FileSystemService } from '@/services/FileSystemService';
@@ -72,20 +73,20 @@ export default function SettingsScreen() {
         </View>
       ))}
     </View>
-  );
-  const [notesCount, setNotesCount] = useState<number>(0);
+  );  const [notesCount, setNotesCount] = useState<number>(0);
   const [storageLocation, setStorageLocation] = useState<string>('');  const [showTimestamps, setShowTimestamps] = useState<boolean>(true);
   const [autoSaveOnExit, setAutoSaveOnExit] = useState<boolean>(false);
+  const [fabPositionBottom, setFabPositionBottom] = useState<boolean>(false);
   const [quickNoteUri, setQuickNoteUri] = useState<string | null>(null);
   const [quickNoteFilename, setQuickNoteFilename] = useState<string | null>(null);
   const [showNoteSelector, setShowNoteSelector] = useState<boolean>(false);
   const insets = useSafeAreaInsets();
-  const fileSystemService = FileSystemService.getInstance();
-  React.useEffect(() => {
+  const fileSystemService = FileSystemService.getInstance();  React.useEffect(() => {
     loadNotesCount();
     loadStorageLocation();
     loadTimestampPreference();
     loadAutoSavePreference();
+    loadFabPositionPreference();
     loadQuickNotePreference();
   }, []);
 
@@ -142,7 +143,6 @@ export default function SettingsScreen() {
       HapticsService.error();
     }
   };
-
   const handleAutoSaveToggle = async (value: boolean) => {
     try {
       value ? HapticsService.toggleOn() : HapticsService.toggleOff();
@@ -150,6 +150,26 @@ export default function SettingsScreen() {
       setAutoSaveOnExit(value);
     } catch (error) {
       console.error('Error saving auto-save preference:', error);
+      HapticsService.error();
+    }
+  };
+
+  const loadFabPositionPreference = async () => {
+    try {
+      const fabPositionBottom = await fileSystemService.getFabPositionBottom();
+      setFabPositionBottom(fabPositionBottom);
+    } catch (error) {
+      console.error('Error loading FAB position preference:', error);
+    }
+  };
+
+  const handleFabPositionToggle = async (value: boolean) => {
+    try {
+      value ? HapticsService.toggleOn() : HapticsService.toggleOff();
+      await fileSystemService.setFabPositionBottom(value);
+      setFabPositionBottom(value);
+    } catch (error) {
+      console.error('Error saving FAB position preference:', error);
       HapticsService.error();
     }
   };
@@ -509,15 +529,22 @@ export default function SettingsScreen() {
             showSwitch={true}
             switchValue={showTimestamps}
             onSwitchChange={handleTimestampToggle}
-          />
-
-          <SettingItem
+          />          <SettingItem
             icon={<Save size={22} color={colors.textMuted} />}
             title="Auto-save on Exit"
             subtitle="Automatically save changes when leaving the editor"
             showSwitch={true}
             switchValue={autoSaveOnExit}
             onSwitchChange={handleAutoSaveToggle}
+          />
+
+          <SettingItem
+            icon={<Plus size={22} color={colors.textMuted} />}
+            title="New Note Button Position"
+            subtitle="Show the new note button at the bottom right instead of top"
+            showSwitch={true}
+            switchValue={fabPositionBottom}
+            onSwitchChange={handleFabPositionToggle}
           />
         </View>
 
