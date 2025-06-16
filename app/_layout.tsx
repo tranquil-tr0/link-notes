@@ -108,9 +108,48 @@ export default function RootLayout() {
       console.error('Error processing deep link:', error);
     }
   };
-
   useEffect(() => {
     const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      console.log('Deep link received while app active:', url);
+      
+      if (!isInitialized) {
+        // If app is not yet initialized, store the deep link for later processing
+        setPendingDeepLink(url);
+        return;
+      }
+      
+      // Process immediately with push navigation (preserves navigation stack)
+      processDeepLink(url, true);
+    };
+
+    // Get initial URL (if app was opened from deep link)
+    const getInitialURL = async () => {
+      const initialUrl = await Linking.getInitialURL();
+      if (initialUrl) {
+        handleDeepLink({ url: initialUrl });
+      }
+    };
+
+    // Listen for deep links while app is running
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check for initial URL
+    getInitialURL();
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [isInitialized]);
+
+  // Process pending deep link once app is initialized
+  useEffect(() => {
+    if (isInitialized && pendingDeepLink) {
+      console.log('Processing pending deep link:', pendingDeepLink);
+      
+      // Process with replace navigation (for cold starts)
+      processDeepLink(pendingDeepLink, false);
+      setPendingDeepLink(null);
     }
   }, [isInitialized, pendingDeepLink]);
 
