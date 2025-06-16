@@ -7,6 +7,7 @@
 - fix the theme select buttons
 - consider a voice note quick settings tile - audio file or transcribe by calling the system dictation thing
 - consider uploading images, videos, audio into vault
+- move settings persistence into settings instead of FileSystemService
 
 # Polish
 - duplicate notes storage to improve loading time (by not requiring IO to show initial content)
