@@ -19,6 +19,7 @@ import FolderCard from '@/components/FolderCard';
 import { DirectoryContents, FolderItem, NoteItem } from '@/types/FileSystemItem';
 import { FileSystemService } from '@/services/FileSystemService';
 import { useTheme } from '@/components/ThemeProvider';
+import { RADIUS, SPACING } from '@/theme';
 
 export default function FolderScreen() {
   const { path } = useLocalSearchParams<{ path: string[] }>();
@@ -362,10 +363,9 @@ export default function FolderScreen() {
                   })}
                   showTimestamp={showTimestamp}
                 />
-              ))
-            ]}
+              ))            ]}
             numColumns={2}
-            spacing={16}          />
+            spacing={SPACING.margin}          />
         )}
       </View>
 
@@ -374,11 +374,12 @@ export default function FolderScreen() {
           style={[styles.floatingActionButton, { 
             backgroundColor: colors.accent,
             bottom: insets.bottom + 20,
+            right: insets.bottom + 15,
           }]}
           onPress={handleCreateNote}
           activeOpacity={0.7}
         >
-          <Plus size={28} color={colors.background} />
+          <Plus size={32} color={colors.background} />
         </TouchableOpacity>
       )}
     </SafeAreaView>
@@ -414,7 +415,7 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     padding: 10,
-    borderRadius: 12,
+    borderRadius: RADIUS.large,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -448,18 +449,16 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 8,
-  },
-  emptyStateSubtext: {
+  },  emptyStateSubtext: {
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
   },
   floatingActionButton: {
     position: 'absolute',
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
