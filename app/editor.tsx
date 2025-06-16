@@ -41,6 +41,7 @@ export default function EditorScreen() {
 
   useEffect(() => {
     if (mode === 'edit' && noteId) {
+      // Validate noteId exists before attempting to load
       loadNote(noteId as string);
     } else if (mode === 'create') {
       // Initialize with empty content for new note
@@ -86,13 +87,26 @@ export default function EditorScreen() {
         setContent(loadedNote.content);
         setNoteTitle(formatFilenameAsTitle(loadedNote.filename));
       } else {
-        Alert.alert('Error', 'Note not found');
-        router.back();
+        // Enhanced error message for better user experience from Quick Settings Tile
+        Alert.alert(
+          'Note Not Found',
+          'The selected note could not be found. It may have been moved or deleted.',
+          [
+            { text: 'Go Back', onPress: () => router.back() },
+            { text: 'Browse Notes', onPress: () => router.replace('/') }
+          ]
+        );
       }
     } catch (error) {
       console.error('Error loading note:', error);
-      Alert.alert('Error', 'Failed to load note');
-      router.back();
+      Alert.alert(
+        'Error',
+        'Failed to load note. Please try again.',
+        [
+          { text: 'Go Back', onPress: () => router.back() },
+          { text: 'Browse Notes', onPress: () => router.replace('/') }
+        ]
+      );
     } finally {
       setIsLoading(false);
     }

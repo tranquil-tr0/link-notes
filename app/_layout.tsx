@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, Linking } from 'react-native';
 import { ThemeProvider, useTheme } from '../components/ThemeProvider';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { FileSystemService } from '@/services/FileSystemService';

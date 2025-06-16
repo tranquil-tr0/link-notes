@@ -1,5 +1,4 @@
 # Priority
-- quick settings tile
 - haptics
 
 

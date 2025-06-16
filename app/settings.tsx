@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react-native';
 import { useTheme, Theme } from '../components/ThemeProvider';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
   TouchableOpacity,
   ScrollView,
   Alert,
@@ -24,12 +24,14 @@ import {
   HardDrive,
   Clock,
 } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { FileSystemService } from '@/services/FileSystemService';
 import { NoteSelector } from '@/components/NoteSelector';
 import { NotePreview } from '@/types/Note';
 
 export default function SettingsScreen() {
+  const params = useLocalSearchParams();
+  const { showToast, message } = params;
   const { theme, setTheme, colors } = useTheme();
   const themeOptions: { label: string; value: Theme; icon: React.ReactNode }[] = [
     { label: 'Rose Pine', value: 'rosePine', icon: <Moon size={20} color="#c4a7e7" /> },
@@ -81,6 +83,15 @@ export default function SettingsScreen() {
     loadTimestampPreference();
     loadQuickNotePreference();
   }, []);
+
+  // Handle toast message from Quick Settings Tile
+  React.useEffect(() => {
+    if (showToast === 'true' && message) {
+      // Decode the message and show the toast
+      const decodedMessage = decodeURIComponent(message as string);
+      Alert.alert('Quick Settings Tile', decodedMessage, [{ text: 'OK' }]);
+    }
+  }, [showToast, message]);
 
   const loadNotesCount = async () => {
     try {

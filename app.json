@@ -6,6 +6,17 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
+    "linking": {
+      "prefixes": ["myapp://", "exp+link-notes://"],
+      "config": {
+        "screens": {
+          "index": "",
+          "editor": "editor",
+          "settings": "settings",
+          "folder/[...path]": "folder/*"
+        }
+      }
+    },
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -24,7 +35,8 @@
       "permissions": [
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.MANAGE_EXTERNAL_STORAGE"
+        "android.permission.MANAGE_EXTERNAL_STORAGE",
+        "android.permission.BIND_QUICK_SETTINGS_TILE"
       ]
     },
     "web": {
@@ -36,7 +48,8 @@
       "expo-router",
       "expo-font",
       "expo-web-browser",
-      "expo-document-picker"
+      "expo-document-picker",
+      "./plugins/quick-settings-tile-plugin.js"
     ],
     "experiments": {
       "typedRoutes": true
