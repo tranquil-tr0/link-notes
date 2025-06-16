@@ -70,7 +70,7 @@ export default function RootLayout() {
       const searchParams = urlObj.searchParams;
       
       // Handle editor deep links
-      // Format: exp+link-notes://editor?mode=edit&noteId=filename.md&folderPath=/path/to/folder
+      // Format: linknotes://editor?mode=edit&noteId=filename.md&folderPath=/path/to/folder
       if (path === '/editor' || path === 'editor') {
         const mode = searchParams.get('mode');
         const noteId = searchParams.get('noteId');

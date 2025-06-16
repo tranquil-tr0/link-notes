@@ -109,7 +109,7 @@ class QuickNoteTileService : TileService() {
             
             // Step 4: Validate deep link format
             Log.d(TAG, "Step 4: Validating deep link format...")
-            if (deepLinkUri.startsWith("myapp://")) {
+            if (deepLinkUri.startsWith("linknotes://")) {
                 Log.i(TAG, "Deep link format is valid")
                 
                 // Step 5: Attempt to open app
@@ -134,13 +134,13 @@ class QuickNoteTileService : TileService() {
         try {
             val message = "No quick note selected. Please select a note in Settings."
             val encodedMessage = Uri.encode(message)
-            val settingsUri = "myapp://settings?showToast=true&message=$encodedMessage"
+            val settingsUri = "linknotes://settings?showToast=true&message=$encodedMessage"
             Log.d(TAG, "Opening settings with toast: $settingsUri")
             openApp(settingsUri)
         } catch (e: Exception) {
             Log.e(TAG, "Error opening settings", e)
             // Fallback to main app
-            openApp("myapp://")
+            openApp("linknotes://")
         }
     }
 

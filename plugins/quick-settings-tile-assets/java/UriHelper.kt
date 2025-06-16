@@ -161,7 +161,7 @@ object UriHelper {
             
             // Step 3: Build base URL
             Log.d(TAG, "Step 3: Building base URL...")
-            val baseUrl = "myapp://editor?mode=edit&noteId=$encodedFilename"
+            val baseUrl = "linknotes://editor?mode=edit&noteId=$encodedFilename"
             Log.i(TAG, "Base URL: $baseUrl")
             
             // Step 4: Add folder path if present
@@ -180,7 +180,7 @@ object UriHelper {
             
             // Step 5: Validate final deep link
             Log.d(TAG, "Step 5: Validating final deep link...")
-            if (deepLink.startsWith("myapp://editor")) {
+            if (deepLink.startsWith("linknotes://editor")) {
                 Log.i(TAG, "Deep link validation successful")
             } else {
                 Log.w(TAG, "Deep link validation warning: doesn't start with expected prefix")
@@ -196,7 +196,7 @@ object UriHelper {
             Log.e(TAG, "Input filename: '$filename'")
             Log.e(TAG, "Input folder path: ${folderPath ?: "NULL"}")
             
-            val fallbackLink = "myapp://editor?mode=edit&noteId=untitled"
+            val fallbackLink = "linknotes://editor?mode=edit&noteId=untitled"
             Log.w(TAG, "Using fallback deep link: $fallbackLink")
             fallbackLink
         } finally {
@@ -210,12 +210,12 @@ object UriHelper {
     fun buildSettingsDeepLink(message: String): String {
         return try {
             val encodedMessage = Uri.encode(message)
-            val deepLink = "myapp://settings?showToast=true&message=$encodedMessage"
+            val deepLink = "linknotes://settings?showToast=true&message=$encodedMessage"
             Log.d(TAG, "Built settings deep link: $deepLink")
             deepLink
         } catch (e: Exception) {
             Log.e(TAG, "Error building settings deep link", e)
-            "myapp://settings"
+            "linknotes://settings"
         }
     }
 
