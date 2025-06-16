@@ -148,12 +148,21 @@ class QuickNoteTileService : TileService() {
                 try {
                     Log.d(TAG, "Creating intent within unlockAndRun...")
                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri)).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        // Enhanced flags for proper app focus and foreground behavior
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                               Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                               Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                               Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT or
+                               Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                        
+                        // Set package to ensure we're targeting our own app
+                        setPackage(packageName)
                     }
-                    Log.i(TAG, "Intent created successfully")
+                    Log.i(TAG, "Intent created successfully with enhanced flags")
                     Log.i(TAG, "Intent action: ${intent.action}")
                     Log.i(TAG, "Intent data: ${intent.data}")
                     Log.i(TAG, "Intent flags: ${intent.flags}")
+                    Log.i(TAG, "Intent package: ${intent.getPackage()}")
                     
                     // Validate intent can be resolved
                     val resolveInfo = packageManager.resolveActivity(intent, 0)
@@ -177,11 +186,17 @@ class QuickNoteTileService : TileService() {
                     Log.w(TAG, "Attempting fallback to main app launcher...")
                     try {
                         val fallbackIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
-                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                            // Use same enhanced flags for consistent app focus behavior
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                                   Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                   Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                                   Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT or
+                                   Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
                         }
                         
                         if (fallbackIntent != null) {
-                            Log.i(TAG, "Fallback intent created: ${fallbackIntent.component}")
+                            Log.i(TAG, "Fallback intent created with enhanced flags: ${fallbackIntent.component}")
+                            Log.i(TAG, "Fallback intent flags: ${fallbackIntent.flags}")
                             startActivity(fallbackIntent)
                             Log.i(TAG, "Fallback launch successful")
                         } else {
