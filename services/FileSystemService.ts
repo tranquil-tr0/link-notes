@@ -6,17 +6,19 @@ import { openDocumentTree, listFiles, readFile, writeFile, mkdir, unlink, stat }
 import { Note, NotePreview } from '@/types/Note';
 import { DirectoryContents, FolderItem, NoteItem, FileSystemItem } from '@/types/FileSystemItem';
 
-interface UserPreferences {
-  showTimestamps: boolean;
-  welcomeCompleted: boolean;
-  quickNoteUri: string | null;
-}
+// Individual preference keys
+const PREFERENCE_KEYS = {
+  SHOW_TIMESTAMPS: 'user_preference_showTimestamps',
+  WELCOME_COMPLETED: 'user_preference_welcomeCompleted',
+  QUICK_NOTE_URI: 'user_preference_quickNoteUri',
+} as const;
 
-const DEFAULT_PREFERENCES: UserPreferences = {
-  showTimestamps: true,
-  welcomeCompleted: false,
-  quickNoteUri: null,
-};
+// Default values
+const DEFAULT_VALUES = {
+  SHOW_TIMESTAMPS: true,
+  WELCOME_COMPLETED: false,
+  QUICK_NOTE_URI: null,
+} as const;
 
 /**
  * Wrapper for AsyncStorage operations with timeout protection
@@ -54,7 +56,6 @@ export class FileSystemService {
   private static instance: FileSystemService;
   private notesDirectory: string;
   private customDirectory: string | null = null;
-  private userPreferences: UserPreferences = DEFAULT_PREFERENCES;
   private currentDirectory: string | null = null;
   
   // Cache implementation
@@ -721,95 +722,99 @@ export class FileSystemService {
     }
   }
 
+
   /**
-   * Load user preferences from storage
+   * Get current user preferences (reconstructed from individual keys)
    */
-  async loadUserPreferences(): Promise<void> {
-    ;
+  async getUserPreferences(): Promise<{
+    showTimestamps: boolean;
+    welcomeCompleted: boolean;
+    quickNoteUri: string | null;
+  }> {
+    return {
+      showTimestamps: await this.getShowTimestamps(),
+      welcomeCompleted: await this.getWelcomeCompleted(),
+      quickNoteUri: await this.getQuickNoteUri(),
+    };
+  }
+
+  /**
+   * Get timestamp visibility preference
+   */
+  async getShowTimestamps(): Promise<boolean> {
     try {
-      
-      const preferencesData = await asyncStorageWithTimeout.getItem('user_preferences');
-      ;
-      
-      if (preferencesData) {
-        this.userPreferences = { ...DEFAULT_PREFERENCES, ...JSON.parse(preferencesData) };
-        ;
-      } else {
-        this.userPreferences = DEFAULT_PREFERENCES;
-      }
+      const value = await asyncStorageWithTimeout.getItem(PREFERENCE_KEYS.SHOW_TIMESTAMPS);
+      return value !== null ? JSON.parse(value) : DEFAULT_VALUES.SHOW_TIMESTAMPS;
     } catch (error) {
-      ;
-      console.warn('AsyncStorage failed to load user preferences, using defaults');
-      this.userPreferences = DEFAULT_PREFERENCES;
+      console.warn('Failed to load showTimestamps preference, using default');
+      return DEFAULT_VALUES.SHOW_TIMESTAMPS;
     }
-  }
-
-  /**
-   * Save user preferences to storage
-   */
-  async saveUserPreferences(preferences: Partial<UserPreferences>): Promise<void> {
-    try {
-      this.userPreferences = { ...this.userPreferences, ...preferences };
-      await asyncStorageWithTimeout.setItem('user_preferences', JSON.stringify(this.userPreferences));
-    } catch (error) {
-      console.error('Failed to save user preferences:', error);
-    }
-  }
-
-  /**
-   * Get current user preferences
-   */
-  getUserPreferences(): UserPreferences {
-    return this.userPreferences;
-  }
-
-  /**
-   * Get specific preference value
-   */
-  getShowTimestamps(): boolean {
-    return this.userPreferences.showTimestamps;
   }
 
   /**
    * Set timestamp visibility preference
    */
   async setShowTimestamps(show: boolean): Promise<void> {
-    await this.saveUserPreferences({ showTimestamps: show });
+    try {
+      await asyncStorageWithTimeout.setItem(PREFERENCE_KEYS.SHOW_TIMESTAMPS, JSON.stringify(show));
+    } catch (error) {
+      console.error('Failed to save showTimestamps preference:', error);
+    }
   }
 
   /**
    * Check if welcome screen has been completed
    */
-  getWelcomeCompleted(): boolean {
-    return this.userPreferences.welcomeCompleted;
+  async getWelcomeCompleted(): Promise<boolean> {
+    try {
+      const value = await asyncStorageWithTimeout.getItem(PREFERENCE_KEYS.WELCOME_COMPLETED);
+      return value !== null ? JSON.parse(value) : DEFAULT_VALUES.WELCOME_COMPLETED;
+    } catch (error) {
+      console.warn('Failed to load welcomeCompleted preference, using default');
+      return DEFAULT_VALUES.WELCOME_COMPLETED;
+    }
   }
 
   /**
    * Set welcome screen completion status
    */
   async setWelcomeCompleted(completed: boolean): Promise<void> {
-    await this.saveUserPreferences({ welcomeCompleted: completed });
+    try {
+      await asyncStorageWithTimeout.setItem(PREFERENCE_KEYS.WELCOME_COMPLETED, JSON.stringify(completed));
+    } catch (error) {
+      console.error('Failed to save welcomeCompleted preference:', error);
+    }
   }
 
   /**
    * Get quick note URI
    */
-  getQuickNoteUri(): string | null {
-    return this.userPreferences.quickNoteUri;
+  async getQuickNoteUri(): Promise<string | null> {
+    try {
+      const value = await asyncStorageWithTimeout.getItem(PREFERENCE_KEYS.QUICK_NOTE_URI);
+      return value !== null ? JSON.parse(value) : DEFAULT_VALUES.QUICK_NOTE_URI;
+    } catch (error) {
+      console.warn('Failed to load quickNoteUri preference, using default');
+      return DEFAULT_VALUES.QUICK_NOTE_URI;
+    }
   }
 
   /**
    * Set quick note URI
    */
   async setQuickNoteUri(uri: string | null): Promise<void> {
-    await this.saveUserPreferences({ quickNoteUri: uri });
+    try {
+      await asyncStorageWithTimeout.setItem(PREFERENCE_KEYS.QUICK_NOTE_URI, JSON.stringify(uri));
+    } catch (error) {
+      console.error('Failed to save quickNoteUri preference:', error);
+    }
   }
 
   /**
    * Get quick note filename from URI (for display purposes)
    */
-  getQuickNoteFilename(): string | null {
-    const uri = this.userPreferences.quickNoteUri;
+  async getQuickNoteFilename(): Promise<string | null> {
+    const uri = await this.getQuickNoteUri();
     if (!uri) return null;
     
     // Extract filename from various URI formats

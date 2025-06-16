@@ -48,8 +48,7 @@ export default function HomeScreen() {
   useEffect(() => {
     const checkWelcome = async () => {
       try {
-        await fileSystemService.loadUserPreferences();
-        const welcomeCompleted = fileSystemService.getWelcomeCompleted();
+        const welcomeCompleted = await fileSystemService.getWelcomeCompleted();
         
         if (!welcomeCompleted) {
           router.replace('/welcome');
@@ -71,9 +70,6 @@ export default function HomeScreen() {
       // Load directory preference first to ensure correct storage path
       await fileSystemService.loadDirectoryPreference();
       
-      // Load user preferences
-      await fileSystemService.loadUserPreferences();
-      
       // Always load root directory contents for home screen
       fileSystemService.resetToRootDirectory();
       const contents = await fileSystemService.getDirectoryContents();
@@ -81,7 +77,8 @@ export default function HomeScreen() {
       setFilteredContents(contents);
       
       // Update timestamp visibility setting
-      setShowTimestamp(fileSystemService.getShowTimestamps());
+      const showTimestamps = await fileSystemService.getShowTimestamps();
+      setShowTimestamp(showTimestamps);
     } catch (error) {
       console.error('Error loading directory contents:', error);
     } finally {

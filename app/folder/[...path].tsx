@@ -64,14 +64,13 @@ export default function FolderScreen() {
       // Load directory preference first to ensure correct storage path
       await fileSystemService.loadDirectoryPreference();
       
-      await fileSystemService.loadUserPreferences();
-      
       const targetPath = getDirectoryPath();
       const contents = await fileSystemService.getDirectoryContents(targetPath);
       setDirectoryContents(contents);
       setFilteredContents(contents);
       
-      setShowTimestamp(fileSystemService.getShowTimestamps());
+      const showTimestamps = await fileSystemService.getShowTimestamps();
+      setShowTimestamp(showTimestamps);
     } catch (error) {
       console.error('Error loading directory contents:', error);
     } finally {

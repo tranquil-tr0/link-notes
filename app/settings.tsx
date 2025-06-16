@@ -113,8 +113,8 @@ export default function SettingsScreen() {
 
   const loadTimestampPreference = async () => {
     try {
-      await fileSystemService.loadUserPreferences();
-      setShowTimestamps(fileSystemService.getShowTimestamps());
+      const showTimestamps = await fileSystemService.getShowTimestamps();
+      setShowTimestamps(showTimestamps);
     } catch (error) {
       console.error('Error loading timestamp preference:', error);
     }
@@ -131,9 +131,8 @@ export default function SettingsScreen() {
 
   const loadQuickNotePreference = async () => {
     try {
-      await fileSystemService.loadUserPreferences();
-      const uri = fileSystemService.getQuickNoteUri();
-      const filename = fileSystemService.getQuickNoteFilename();
+      const uri = await fileSystemService.getQuickNoteUri();
+      const filename = await fileSystemService.getQuickNoteFilename();
       setQuickNoteUri(uri);
       setQuickNoteFilename(filename);
     } catch (error) {

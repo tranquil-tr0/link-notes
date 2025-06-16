@@ -41,8 +41,6 @@ export default function RootLayout() {
         
         await fileSystemService.loadDirectoryPreference();
         
-        await fileSystemService.loadUserPreferences();
-        
         // Check if welcome is completed
         const welcomeCompleted = fileSystemService.getWelcomeCompleted();
         
