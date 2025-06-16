@@ -265,7 +265,9 @@ export default function EditorScreen() {
       HapticsService.error();
       Alert.alert('Error', 'Failed to delete note. Please try again.');
     }
-  };  /**
+  };
+
+  /**
    * Safely navigate back with fallback to home screen.
    * This handles cases where the app was opened via deep link and has no navigation history.
    */
@@ -279,6 +281,7 @@ export default function EditorScreen() {
       router.replace('/');
     }
   };
+
   // Internal back press logic without haptic feedback (used by hardware back button)
   const handleBackPressInternal = () => {
     if (hasUnsavedChanges) {
