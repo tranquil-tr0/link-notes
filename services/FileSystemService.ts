@@ -11,13 +11,15 @@ const PREFERENCE_KEYS = {
   SHOW_TIMESTAMPS: 'user_preference_showTimestamps',
   WELCOME_COMPLETED: 'user_preference_welcomeCompleted',
   QUICK_NOTE_URI: 'user_preference_quickNoteUri',
+  AUTO_SAVE_ON_EXIT: 'user_preference_autoSaveOnExit',
 } as const;
 
 // Default values
 const DEFAULT_VALUES = {
-  SHOW_TIMESTAMPS: true,
+  SHOW_TIMESTAMPS: false,
   WELCOME_COMPLETED: false,
   QUICK_NOTE_URI: null,
+  AUTO_SAVE_ON_EXIT: true,
 } as const;
 
 /**
@@ -722,7 +724,6 @@ export class FileSystemService {
     }
   }
 
-
   /**
    * Get current user preferences (reconstructed from individual keys)
    */
@@ -730,11 +731,13 @@ export class FileSystemService {
     showTimestamps: boolean;
     welcomeCompleted: boolean;
     quickNoteUri: string | null;
+    autoSaveOnExit: boolean;
   }> {
     return {
       showTimestamps: await this.getShowTimestamps(),
       welcomeCompleted: await this.getWelcomeCompleted(),
       quickNoteUri: await this.getQuickNoteUri(),
+      autoSaveOnExit: await this.getAutoSaveOnExit(),
     };
   }
 
@@ -798,7 +801,6 @@ export class FileSystemService {
       return DEFAULT_VALUES.QUICK_NOTE_URI;
     }
   }
-
   /**
    * Set quick note URI
    */
@@ -807,6 +809,30 @@ export class FileSystemService {
       await asyncStorageWithTimeout.setItem(PREFERENCE_KEYS.QUICK_NOTE_URI, JSON.stringify(uri));
     } catch (error) {
       console.error('Failed to save quickNoteUri preference:', error);
+    }
+  }
+
+  /**
+   * Get auto-save on exit preference
+   */
+  async getAutoSaveOnExit(): Promise<boolean> {
+    try {
+      const value = await asyncStorageWithTimeout.getItem(PREFERENCE_KEYS.AUTO_SAVE_ON_EXIT);
+      return value !== null ? JSON.parse(value) : DEFAULT_VALUES.AUTO_SAVE_ON_EXIT;
+    } catch (error) {
+      console.warn('Failed to load autoSaveOnExit preference, using default');
+      return DEFAULT_VALUES.AUTO_SAVE_ON_EXIT;
+    }
+  }
+
+  /**
+   * Set auto-save on exit preference
+   */
+  async setAutoSaveOnExit(autoSave: boolean): Promise<void> {
+    try {
+      await asyncStorageWithTimeout.setItem(PREFERENCE_KEYS.AUTO_SAVE_ON_EXIT, JSON.stringify(autoSave));
+    } catch (error) {
+      console.error('Failed to save autoSaveOnExit preference:', error);
     }
   }
 

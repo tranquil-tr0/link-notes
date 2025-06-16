@@ -33,13 +33,12 @@ export default function EditorScreen() {
   const [note, setNote] = useState<Note | null>(null);
   const [content, setContent] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [autoSaveOnExit, setAutoSaveOnExit] = useState(false);
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
   const fileSystemService = FileSystemService.getInstance();
-
   useEffect(() => {
     if (mode === 'edit' && noteId) {
       // Validate noteId exists before attempting to load
@@ -50,7 +49,19 @@ export default function EditorScreen() {
       setNoteTitle('');
       setHasUnsavedChanges(true);
     }
+    
+    // Load auto-save preference
+    loadAutoSavePreference();
   }, [mode, noteId, folderPath]);
+
+  const loadAutoSavePreference = async () => {
+    try {
+      const autoSave = await fileSystemService.getAutoSaveOnExit();
+      setAutoSaveOnExit(autoSave);
+    } catch (error) {
+      console.error('Error loading auto-save preference:', error);
+    }
+  };
 
   // Handle hardware back button on Android and keyboard settings
   useFocusEffect(
@@ -268,35 +279,41 @@ export default function EditorScreen() {
       router.replace('/');
     }
   };
-
   const handleBackPress = () => {
     if (hasUnsavedChanges) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert(
-        'Save Changes?',
-        'You have unsaved changes. Would you like to save before leaving?',
-        [
-          {
-            text: 'Don\'t Save',
-            style: 'destructive',
-            onPress: () => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              safeNavigateBack();
-            }
-          },
-          {
-            text: 'Save & Exit',
-            onPress: () => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              saveAndExit();
-            }
-          },
-          {
-            text: 'Cancel',
-            style: 'cancel'
-          },
-        ]
-      );
+      if (autoSaveOnExit) {
+        // Auto-save is enabled, save and exit without prompting
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        saveAndExit();
+      } else {
+        // Auto-save is disabled, show the prompt
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Alert.alert(
+          'Save Changes?',
+          'You have unsaved changes. Would you like to save before leaving?',
+          [
+            {
+              text: 'Don\'t Save',
+              style: 'destructive',
+              onPress: () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                safeNavigateBack();
+              }
+            },
+            {
+              text: 'Save & Exit',
+              onPress: () => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                saveAndExit();
+              }
+            },
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            },
+          ]
+        );
+      }
     } else {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       safeNavigateBack();

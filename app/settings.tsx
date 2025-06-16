@@ -24,6 +24,7 @@ import {
   FileText,
   HardDrive,
   Clock,
+  Save,
 } from 'lucide-react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { FileSystemService } from '@/services/FileSystemService';
@@ -73,18 +74,18 @@ export default function SettingsScreen() {
     </View>
   );
   const [notesCount, setNotesCount] = useState<number>(0);
-  const [storageLocation, setStorageLocation] = useState<string>('');
-  const [showTimestamps, setShowTimestamps] = useState<boolean>(true);
+  const [storageLocation, setStorageLocation] = useState<string>('');  const [showTimestamps, setShowTimestamps] = useState<boolean>(true);
+  const [autoSaveOnExit, setAutoSaveOnExit] = useState<boolean>(false);
   const [quickNoteUri, setQuickNoteUri] = useState<string | null>(null);
   const [quickNoteFilename, setQuickNoteFilename] = useState<string | null>(null);
   const [showNoteSelector, setShowNoteSelector] = useState<boolean>(false);
   const insets = useSafeAreaInsets();
   const fileSystemService = FileSystemService.getInstance();
-
   React.useEffect(() => {
     loadNotesCount();
     loadStorageLocation();
     loadTimestampPreference();
+    loadAutoSavePreference();
     loadQuickNotePreference();
   }, []);
 
@@ -114,7 +115,6 @@ export default function SettingsScreen() {
       console.error('Error loading storage location:', error);
     }
   };
-
   const loadTimestampPreference = async () => {
     try {
       const showTimestamps = await fileSystemService.getShowTimestamps();
@@ -124,6 +124,14 @@ export default function SettingsScreen() {
     }
   };
 
+  const loadAutoSavePreference = async () => {
+    try {
+      const autoSaveOnExit = await fileSystemService.getAutoSaveOnExit();
+      setAutoSaveOnExit(autoSaveOnExit);
+    } catch (error) {
+      console.error('Error loading auto-save preference:', error);
+    }
+  };
   const handleTimestampToggle = async (value: boolean) => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -131,6 +139,17 @@ export default function SettingsScreen() {
       setShowTimestamps(value);
     } catch (error) {
       console.error('Error saving timestamp preference:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  const handleAutoSaveToggle = async (value: boolean) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      await fileSystemService.setAutoSaveOnExit(value);
+      setAutoSaveOnExit(value);
+    } catch (error) {
+      console.error('Error saving auto-save preference:', error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
@@ -483,14 +502,22 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Display</Text>
           <Text style={{ marginHorizontal: 20, marginBottom: 8, color: colors.textMuted, fontSize: 15 }}>App Theme</Text>
-          <ThemeSelector />
-          <SettingItem
+          <ThemeSelector />          <SettingItem
             icon={<Clock size={22} color={colors.textMuted} />}
             title="Show Timestamps"
             subtitle="Display timestamps at the bottom of notes"
             showSwitch={true}
             switchValue={showTimestamps}
             onSwitchChange={handleTimestampToggle}
+          />
+
+          <SettingItem
+            icon={<Save size={22} color={colors.textMuted} />}
+            title="Auto-save on Exit"
+            subtitle="Automatically save changes when leaving the editor"
+            showSwitch={true}
+            switchValue={autoSaveOnExit}
+            onSwitchChange={handleAutoSaveToggle}
           />
         </View>
 

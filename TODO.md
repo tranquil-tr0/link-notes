@@ -1,8 +1,6 @@
 # Priority
 - add a preview button that renders the markdown
 - put new note button at the bottom (configurable?)
-- autosaving
-
 
 # Less priority
 - settings option for note sorting mode (recent, alphabetical)
