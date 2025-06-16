@@ -247,6 +247,14 @@ export default function HomeScreen() {
             handleFolderPress(folder);
           }
         },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            HapticsService.warning();
+            confirmDeleteFolder(folder);
+          }
+        },
       ]
     );
   };
@@ -270,6 +278,25 @@ export default function HomeScreen() {
     );
   };
 
+  const confirmDeleteFolder = (folder: FolderItem) => {
+    HapticsService.warning();
+    Alert.alert(
+      'Delete Folder',
+      `Warning: this action is not reversible. Deleting the folder "${folder.name}" will delete all folders and notes within it.\n\nAre you sure you want to continue?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            HapticsService.success();
+            deleteFolder(folder);
+          }
+        },
+      ]
+    );
+  };
+
   const deleteNote = async (noteId: string) => {
     try {
       const currentFolderPath = getPathArray().join('/');
@@ -280,6 +307,19 @@ export default function HomeScreen() {
       console.error('Error deleting note:', error);
       HapticsService.error();
       Alert.alert('Error', 'Failed to delete note. Please try again.');
+    }
+  };
+
+  const deleteFolder = async (folder: FolderItem) => {
+    try {
+      const currentFolderPath = getPathArray().join('/');
+      await fileSystemService.deleteFolder(folder.name, currentFolderPath);
+      await loadDirectoryContents();
+      HapticsService.success();
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      HapticsService.error();
+      Alert.alert('Error', 'Failed to delete folder. Please try again.');
     }
   };
 

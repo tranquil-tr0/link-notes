@@ -725,6 +725,110 @@ export class FileSystemService {
       console.error('Error deleting web note:', error);
     }
   }
+
+  /**
+   * Delete a folder and all its contents recursively
+   */
+  async deleteFolder(folderName: string, folderPath?: string): Promise<void> {
+    if (Platform.OS === 'web') {
+      await this.deleteWebFolder(folderName, folderPath);
+      return;
+    }
+    
+    try {
+      // Determine the target directory
+      let targetDir: string;
+      const rootDir = this.getNotesDirectory();
+      
+      if (folderPath && folderPath.trim() !== '') {
+        // Construct path to parent folder
+        if (rootDir.startsWith('content://')) {
+          // SAF path
+          targetDir = `${rootDir}/${folderPath}`;
+        } else {
+          // Regular filesystem path
+          targetDir = `${rootDir}${folderPath}/`;
+        }
+      } else {
+        // Use root directory
+        targetDir = rootDir;
+      }
+      
+      // Construct full folder path
+      let folderToDelete: string;
+      if (targetDir.startsWith('content://')) {
+        // SAF path
+        folderToDelete = `${targetDir}/${folderName}`;
+      } else {
+        // Regular filesystem path
+        folderToDelete = `${targetDir}${folderName}`;
+      }
+      
+      if (targetDir.startsWith('content://')) {
+        // SAF path - recursively delete folder contents
+        await this.deleteSAFFolder(folderToDelete);
+      } else {
+        // Regular file system path
+        await FileSystem.deleteAsync(folderToDelete, { idempotent: true });
+      }
+      
+      // Clear cache after deleting
+      this.clearCache();
+    } catch (error) {
+      console.error('Error deleting folder:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Recursively delete a folder using SAF
+   */
+  private async deleteSAFFolder(folderUri: string): Promise<void> {
+    try {
+      // Get all items in the folder
+      const items = await listFiles(folderUri);
+      
+      // Delete all files and subfolders
+      for (const item of items) {
+        if (item.type === 'directory') {
+          // Recursively delete subfolder
+          await this.deleteSAFFolder(item.uri);
+        } else {
+          // Delete file
+          await unlink(item.uri);
+        }
+      }
+      
+      // Delete the empty folder itself
+      await unlink(folderUri);
+    } catch (error) {
+      console.error('Error deleting SAF folder:', error);
+      throw error;
+    }
+  }
+
+  private async deleteWebFolder(folderName: string, folderPath?: string): Promise<void> {
+    const notesData = localStorage.getItem('notes');
+    if (!notesData) return;
+    
+    try {
+      const notes = JSON.parse(notesData);
+      
+      // Construct the folder path to match
+      const pathPrefix = folderPath ? `${folderPath}/${folderName}` : folderName;
+      
+      // Filter out notes that are in this folder or its subfolders
+      const filteredNotes = notes.filter((note: any) => {
+        const notePath = note.filePath || '';
+        return !notePath.startsWith(pathPrefix);
+      });
+      
+      localStorage.setItem('notes', JSON.stringify(filteredNotes));
+    } catch (error) {
+      console.error('Error deleting web folder:', error);
+    }
+  }
+
   /**
    * Get current user preferences (reconstructed from individual keys)
    */
