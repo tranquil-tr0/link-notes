@@ -86,14 +86,13 @@ export default function EditorScreen() {
       if (loadedNote) {
         setNote(loadedNote);
         setContent(loadedNote.content);
-        setNoteTitle(formatFilenameAsTitle(loadedNote.filename));
-      } else {
+        setNoteTitle(formatFilenameAsTitle(loadedNote.filename));      } else {
         // Enhanced error message for better user experience from Quick Settings Tile
         Alert.alert(
           'Note Not Found',
           'The selected note could not be found. It may have been moved or deleted.',
           [
-            { text: 'Go Back', onPress: () => router.back() },
+            { text: 'Go Back', onPress: () => safeNavigateBack() },
             { text: 'Browse Notes', onPress: () => router.replace('/') }
           ]
         );
@@ -104,7 +103,7 @@ export default function EditorScreen() {
         'Error',
         'Failed to load note. Please try again.',
         [
-          { text: 'Go Back', onPress: () => router.back() },
+          { text: 'Go Back', onPress: () => safeNavigateBack() },
           { text: 'Browse Notes', onPress: () => router.replace('/') }
         ]
       );
@@ -255,6 +254,19 @@ export default function EditorScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', 'Failed to delete note. Please try again.');
     }
+  };  /**
+   * Safely navigate back with fallback to home screen.
+   * This handles cases where the app was opened via deep link and has no navigation history.
+   */
+  const safeNavigateBack = () => {
+    // Check if we can go back in navigation history
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      // If no navigation history (e.g., opened via deep link), go to home screen
+      console.log('No navigation history available, navigating to home.');
+      router.replace('/');
+    }
   };
 
   const handleBackPress = () => {
@@ -269,7 +281,7 @@ export default function EditorScreen() {
             style: 'destructive',
             onPress: () => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.back();
+              safeNavigateBack();
             }
           },
           {
@@ -287,14 +299,13 @@ export default function EditorScreen() {
       );
     } else {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      router.back();
+      safeNavigateBack();
     }
   };
-
   const saveAndExit = async () => {
     const saved = await saveNote();
     if (saved) {
-      router.back();
+      safeNavigateBack();
     }
   };
 
