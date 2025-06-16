@@ -12,7 +12,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FileText, FolderOpen, Smartphone, CheckCircle } from 'lucide-react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
+import { HapticsService } from '@/services/HapticsService';
 import { FileSystemService } from '@/services/FileSystemService';
 import { useTheme } from '@/components/ThemeProvider';
 
@@ -24,13 +24,13 @@ export default function WelcomeScreen() {
   const fileSystemService = FileSystemService.getInstance();
 
   const handleAppStoragePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    HapticsService.selection();
     setSelectedOption('app');
   };
 
   const handleCustomStoragePress = () => {
     if (Platform.OS !== 'android') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      HapticsService.warning();
       Alert.alert(
         'Not Available',
         'Custom storage location is only available on Android devices.',
@@ -38,41 +38,41 @@ export default function WelcomeScreen() {
       );
       return;
     }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    HapticsService.selection();
     setSelectedOption('custom');
   };
 
   const handleContinue = async () => {
     if (!selectedOption) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      HapticsService.warning();
       Alert.alert('Please Select', 'Please choose where you want to store your notes.');
       return;
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    HapticsService.press();
     setIsProcessing(true);
 
     try {
       if (selectedOption === 'app') {
         // Use default app storage - no need to set custom directory
         await fileSystemService.setWelcomeCompleted(true);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        HapticsService.success();
         router.replace('/');
       } else if (selectedOption === 'custom') {
         // Prompt user to select custom directory
         const result = await fileSystemService.selectCustomDirectory();
         if (result) {
           await fileSystemService.setWelcomeCompleted(true);
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          HapticsService.success();
           router.replace('/');
         } else {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+          HapticsService.warning();
           Alert.alert('No Folder Selected', 'Please select a folder to continue, or choose app storage instead.');
         }
       }
     } catch (error) {
       console.error('Error setting up storage:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      HapticsService.error();
       Alert.alert('Error', 'Failed to set up storage location. Please try again.');
     } finally {
       setIsProcessing(false);

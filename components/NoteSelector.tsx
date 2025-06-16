@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { X, FileText, Search } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import { HapticsService } from '@/services/HapticsService';
 import { useTheme } from './ThemeProvider';
 import { FileSystemService } from '../services/FileSystemService';
 import { NotePreview } from '../types/Note';
@@ -48,13 +48,13 @@ export function NoteSelector({ visible, onClose, onSelectNote, currentQuickNoteU
   };
 
   const handleSelectNote = (note: NotePreview) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    HapticsService.selection();
     onSelectNote(note);
     onClose();
   };
 
   const handleClearSelection = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    HapticsService.tap();
     onSelectNote(null);
     onClose();
   };
@@ -72,7 +72,7 @@ export function NoteSelector({ visible, onClose, onSelectNote, currentQuickNoteU
           <TouchableOpacity
             style={[styles.closeButton, { backgroundColor: colors.overlay }]}
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              HapticsService.tap();
               onClose();
             }}
             activeOpacity={0.7}
@@ -130,7 +130,7 @@ export function NoteSelector({ visible, onClose, onSelectNote, currentQuickNoteU
                         },
                       ]}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        HapticsService.selection();
                         handleSelectNote(note);
                       }}
                       activeOpacity={0.7}

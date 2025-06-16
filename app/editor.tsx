@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Trash2, Save } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import * as Haptics from 'expo-haptics';
+import { HapticsService } from '@/services/HapticsService';
 import { useTheme } from '@/components/ThemeProvider';
 import {
   KeyboardAwareScrollView,
@@ -74,7 +74,7 @@ export default function EditorScreen() {
       }
 
       const onBackPress = () => {
-        handleBackPress();
+        handleBackPressInternal();
         return true; // Prevent default behavior
       };
 
@@ -198,7 +198,7 @@ export default function EditorScreen() {
 
   const saveNote = async (): Promise<boolean> => {
     if (!content.trim()) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      HapticsService.error();
       Alert.alert('Error', 'Cannot save empty note');
       return false;
     }
@@ -219,12 +219,12 @@ export default function EditorScreen() {
       await fileSystemService.saveNote(noteToSave, note?.filename, folderPath as string);
       setNote(noteToSave);
       setHasUnsavedChanges(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      HapticsService.success();
       
       return true;
     } catch (error) {
       console.error('Error saving note:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      HapticsService.error();
       Alert.alert('Error', 'Failed to save note. Please try again.');
       return false;
     } finally {
@@ -235,7 +235,7 @@ export default function EditorScreen() {
   const handleDelete = () => {
     if (!note) return;
     
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    HapticsService.warning();
     Alert.alert(
       'Delete Note',
       `Are you sure you want to delete "${formatFilenameAsTitle(note.filename)}"? This action cannot be undone.`,
@@ -245,7 +245,7 @@ export default function EditorScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            HapticsService.success();
             confirmDelete();
           }
         },
@@ -258,11 +258,11 @@ export default function EditorScreen() {
     
     try {
       await fileSystemService.deleteNote(note.filename, folderPath as string);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      HapticsService.success();
       router.replace('/');
     } catch (error) {
       console.error('Error deleting note:', error);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      HapticsService.error();
       Alert.alert('Error', 'Failed to delete note. Please try again.');
     }
   };  /**
@@ -279,15 +279,15 @@ export default function EditorScreen() {
       router.replace('/');
     }
   };
-  const handleBackPress = () => {
+  // Internal back press logic without haptic feedback (used by hardware back button)
+  const handleBackPressInternal = () => {
     if (hasUnsavedChanges) {
       if (autoSaveOnExit) {
         // Auto-save is enabled, save and exit without prompting
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         saveAndExit();
       } else {
         // Auto-save is disabled, show the prompt
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        HapticsService.warning();
         Alert.alert(
           'Save Changes?',
           'You have unsaved changes. Would you like to save before leaving?',
@@ -296,14 +296,14 @@ export default function EditorScreen() {
               text: 'Don\'t Save',
               style: 'destructive',
               onPress: () => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                HapticsService.tap();
                 safeNavigateBack();
               }
             },
             {
               text: 'Save & Exit',
               onPress: () => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                HapticsService.tap();
                 saveAndExit();
               }
             },
@@ -315,9 +315,14 @@ export default function EditorScreen() {
         );
       }
     } else {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       safeNavigateBack();
     }
+  };
+
+  // UI back button handler with haptic feedback
+  const handleBackPress = () => {
+    HapticsService.tap();
+    handleBackPressInternal();
   };
   const saveAndExit = async () => {
     const saved = await saveNote();
@@ -335,7 +340,7 @@ export default function EditorScreen() {
       }]}>
         <TouchableOpacity
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            HapticsService.tap();
             handleBackPress();
           }}
           style={[styles.iconButton, { backgroundColor: colors.overlay }]}
@@ -345,7 +350,7 @@ export default function EditorScreen() {
         <View style={styles.headerActions}>
           <TouchableOpacity
             onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              HapticsService.tap();
               saveNote();
             }}
             style={[styles.iconButton, { backgroundColor: colors.overlay }]}
@@ -356,7 +361,7 @@ export default function EditorScreen() {
           {mode === 'edit' && note && (
             <TouchableOpacity
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                HapticsService.tap();
                 handleDelete();
               }}
               style={[styles.iconButton, styles.deleteButtonHeader, { backgroundColor: colors.overlay }]}

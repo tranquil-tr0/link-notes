@@ -4,7 +4,7 @@ import { FolderItem } from '@/types/FileSystemItem';
 import { Folder, Clock } from 'lucide-react-native';
 import { RADIUS, SPACING } from '../theme';
 import { useTheme } from './ThemeProvider';
-import * as Haptics from 'expo-haptics';
+import { HapticsService } from '@/services/HapticsService';
 
 interface FolderCardProps {
   folder: FolderItem;
@@ -33,11 +33,11 @@ export default function FolderCard({ folder, onPress, onLongPress, showTimestamp
   return (
     <TouchableOpacity
       onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        HapticsService.selection();
         onPress(folder);
       }}
       onLongPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        HapticsService.longPress();
         onLongPress(folder);
       }}
       activeOpacity={0.7}
