@@ -1,5 +1,6 @@
 # Priority
 - add a preview button that renders the markdown
+- put new note button at the bottom (configurable?)
 
 
 # Less priority
@@ -21,3 +22,4 @@
     - hide the top bar on scroll
 - look into optimizing start times
 - consider setting to not show note title if it starts with "Untitled"
+- make haptics configurable
