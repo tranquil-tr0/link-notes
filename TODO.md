@@ -1,5 +1,5 @@
 # Priority
-- haptics
+- add a preview button that renders the markdown
 
 
 # Less priority
