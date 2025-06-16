@@ -49,7 +49,8 @@
       "expo-font",
       "expo-web-browser",
       "expo-document-picker",
-      "./plugins/quick-settings-tile-plugin.js"
+      "./plugins/quick-settings-tile-plugin.js",
+      "./plugins/android-build-config-plugin.js"
     ],
     "experiments": {
       "typedRoutes": true
