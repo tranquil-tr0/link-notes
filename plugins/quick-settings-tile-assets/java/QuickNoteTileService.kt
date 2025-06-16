@@ -27,8 +27,7 @@ class QuickNoteTileService : TileService() {
             Log.d(TAG, "Step 1: Validating AsyncStorage access...")
             val asyncStorageValid = AsyncStorageHelper.validateAsyncStorage(this)
             Log.i(TAG, "AsyncStorage validation result: $asyncStorageValid")
-            
-            // Step 2: Attempt to get quick note URI
+              // Step 2: Attempt to get quick note URI
             Log.d(TAG, "Step 2: Retrieving quick note URI...")
             val quickNoteUri = getQuickNoteUri()
             Log.i(TAG, "Retrieved quick note URI: ${quickNoteUri ?: "NULL"}")
@@ -76,23 +75,6 @@ class QuickNoteTileService : TileService() {
     override fun onStopListening() {
         super.onStopListening()
         Log.d(TAG, "Tile listening stopped")
-    }
-
-    private fun getQuickNoteUri(): String? {
-        return try {
-            // Use the comprehensive method that combines all approaches
-            val result = AsyncStorageHelper.getQuickNoteUriComprehensive(this)
-            if (result != null) {
-                Log.i(TAG, "Comprehensive method succeeded")
-                return result
-            }
-            
-            Log.w(TAG, "All methods failed to find quicknote data")
-            null
-        } catch (e: Exception) {
-            Log.e(TAG, "Error reading quick note URI", e)
-            null
-        }
     }
 
     private fun openQuickNote(uri: String) {
@@ -220,6 +202,10 @@ class QuickNoteTileService : TileService() {
         }
         
         Log.i(TAG, "=== APP OPENING COMPLETE ===")
+    }
+
+    private fun getQuickNoteUri(): String? {
+        return AsyncStorageHelper.getQuickNoteUri(this)
     }
 
     private fun updateTileState() {
