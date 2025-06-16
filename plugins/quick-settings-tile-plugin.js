@@ -73,7 +73,7 @@ const withQuickSettingsTile = (config, props = {}) => {
  * Plugin to copy native Android files during prebuild
  */
 const withQuickSettingsTileFiles = (config) => {
-  return AndroidConfig.Paths.withProjectBuildGradle(config, (config) => {
+  return withAndroidManifest(config, (config) => {
     // This runs during prebuild - copy our native files
     const projectRoot = config.modRequest.projectRoot;
     const androidProjectPath = path.join(projectRoot, 'android');
