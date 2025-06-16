@@ -5,6 +5,8 @@
 # Less priority
 - settings option for note sorting mode (recent, alphabetical)
 - fix the theme select buttons
+- consider a voice note quick settings tile - audio file or transcribe by calling the system dictation thing
+- consider uploading images, videos, audio into vault
 
 # Polish
 - duplicate notes storage to improve loading time (by not requiring IO to show initial content)
