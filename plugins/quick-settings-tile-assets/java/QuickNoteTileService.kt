@@ -80,7 +80,15 @@ class QuickNoteTileService : TileService() {
 
     private fun getQuickNoteUri(): String? {
         return try {
-            AsyncStorageHelper.getQuickNoteUri(this)
+            // Use the comprehensive method that combines all approaches
+            val result = AsyncStorageHelper.getQuickNoteUriComprehensive(this)
+            if (result != null) {
+                Log.i(TAG, "Comprehensive method succeeded")
+                return result
+            }
+            
+            Log.w(TAG, "All methods failed to find quicknote data")
+            null
         } catch (e: Exception) {
             Log.e(TAG, "Error reading quick note URI", e)
             null
