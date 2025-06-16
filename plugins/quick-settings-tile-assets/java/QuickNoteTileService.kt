@@ -150,55 +150,65 @@ class QuickNoteTileService : TileService() {
         Log.i(TAG, "Package name: $packageName")
         
         try {
-            // Step 1: Create intent
-            Log.d(TAG, "Step 1: Creating intent...")
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri)).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }
-            Log.i(TAG, "Intent created successfully")
-            Log.i(TAG, "Intent action: ${intent.action}")
-            Log.i(TAG, "Intent data: ${intent.data}")
-            Log.i(TAG, "Intent flags: ${intent.flags}")
+            // Android Quick Settings tiles cannot directly launch activities with custom intents
+            // due to security restrictions. We need to use the unlockAndRun approach.
+            Log.d(TAG, "Using unlockAndRun approach for tile security compliance...")
             
-            // Step 2: Validate intent can be resolved
-            Log.d(TAG, "Step 2: Validating intent resolution...")
-            val resolveInfo = packageManager.resolveActivity(intent, 0)
-            if (resolveInfo != null) {
-                Log.i(TAG, "Intent can be resolved by: ${resolveInfo.activityInfo.packageName}")
-            } else {
-                Log.w(TAG, "No activity found to handle intent")
+            unlockAndRun {
+                try {
+                    Log.d(TAG, "Creating intent within unlockAndRun...")
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri)).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    }
+                    Log.i(TAG, "Intent created successfully")
+                    Log.i(TAG, "Intent action: ${intent.action}")
+                    Log.i(TAG, "Intent data: ${intent.data}")
+                    Log.i(TAG, "Intent flags: ${intent.flags}")
+                    
+                    // Validate intent can be resolved
+                    val resolveInfo = packageManager.resolveActivity(intent, 0)
+                    if (resolveInfo != null) {
+                        Log.i(TAG, "Intent can be resolved by: ${resolveInfo.activityInfo.packageName}")
+                    } else {
+                        Log.w(TAG, "No activity found to handle intent")
+                    }
+                    
+                    // Start activity using startActivity (not startActivityAndCollapse)
+                    Log.d(TAG, "Starting activity...")
+                    startActivity(intent)
+                    Log.i(TAG, "Activity started successfully")
+                    
+                } catch (e: Exception) {
+                    Log.e(TAG, "ERROR in unlockAndRun with URI: $uri", e)
+                    Log.e(TAG, "Exception type: ${e.javaClass.simpleName}")
+                    Log.e(TAG, "Exception message: ${e.message}")
+                    
+                    // Try fallback to main app launcher
+                    Log.w(TAG, "Attempting fallback to main app launcher...")
+                    try {
+                        val fallbackIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        }
+                        
+                        if (fallbackIntent != null) {
+                            Log.i(TAG, "Fallback intent created: ${fallbackIntent.component}")
+                            startActivity(fallbackIntent)
+                            Log.i(TAG, "Fallback launch successful")
+                        } else {
+                            Log.e(TAG, "Could not create fallback intent - package manager returned null")
+                        }
+                    } catch (fallbackError: Exception) {
+                        Log.e(TAG, "CRITICAL ERROR with fallback intent", fallbackError)
+                        Log.e(TAG, "Fallback exception type: ${fallbackError.javaClass.simpleName}")
+                        Log.e(TAG, "Fallback exception message: ${fallbackError.message}")
+                    }
+                }
             }
-            
-            // Step 3: Start activity
-            Log.d(TAG, "Step 3: Starting activity and collapsing...")
-            startActivityAndCollapse(intent)
-            Log.i(TAG, "startActivityAndCollapse completed successfully")
             
         } catch (e: Exception) {
-            Log.e(TAG, "CRITICAL ERROR starting activity with URI: $uri", e)
+            Log.e(TAG, "CRITICAL ERROR in openApp method", e)
             Log.e(TAG, "Exception type: ${e.javaClass.simpleName}")
             Log.e(TAG, "Exception message: ${e.message}")
-            
-            // Try fallback to main app launcher
-            Log.w(TAG, "Attempting fallback to main app launcher...")
-            try {
-                Log.d(TAG, "Creating fallback intent...")
-                val fallbackIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                }
-                
-                if (fallbackIntent != null) {
-                    Log.i(TAG, "Fallback intent created: ${fallbackIntent.component}")
-                    startActivityAndCollapse(fallbackIntent)
-                    Log.i(TAG, "Fallback launch successful")
-                } else {
-                    Log.e(TAG, "Could not create fallback intent - package manager returned null")
-                }
-            } catch (fallbackError: Exception) {
-                Log.e(TAG, "CRITICAL ERROR with fallback intent", fallbackError)
-                Log.e(TAG, "Fallback exception type: ${fallbackError.javaClass.simpleName}")
-                Log.e(TAG, "Fallback exception message: ${fallbackError.message}")
-            }
         }
         
         Log.i(TAG, "=== APP OPENING COMPLETE ===")
