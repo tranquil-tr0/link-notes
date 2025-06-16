@@ -14,7 +14,7 @@
 # Polish
 - duplicate notes storage to improve loading time (by not requiring IO to show initial content)
 - replace initial "no notes" with loading screen instead
-- consider forking markdown editor or making an editor or whatever else (better editor)
+- consider forking markdown editor or making an editor or whatever else (better editor) - this might make keyboardavoidingview actually work
 - *maybe* I'll look at the note cards again
 - material you theme
 - importable color theme
