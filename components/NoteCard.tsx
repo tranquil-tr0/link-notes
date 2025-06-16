@@ -4,6 +4,7 @@ import { NotePreview } from '@/types/Note';
 import { Clock } from 'lucide-react-native';
 import { RADIUS, SPACING } from '../theme';
 import { useTheme } from './ThemeProvider';
+import * as Haptics from 'expo-haptics';
 
 interface NoteCardProps {
   note: NotePreview;
@@ -65,7 +66,10 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
   return (
     <TouchableOpacity
       onPress={() => onPress(note)}
-      onLongPress={() => onLongPress(note)}
+      onLongPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        onLongPress(note);
+      }}
       activeOpacity={0.7}
     >
       {/* Frame around text and timestamp */}
