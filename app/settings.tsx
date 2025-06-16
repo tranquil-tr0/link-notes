@@ -12,6 +12,7 @@ import {
   Platform,
   Switch,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ArrowLeft,
@@ -56,7 +57,10 @@ export default function SettingsScreen() {
               borderRadius: 12,
               paddingVertical: 12,
             }}
-            onPress={() => setTheme(opt.value)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              setTheme(opt.value);
+            }}
             activeOpacity={0.8}
           >
             {opt.icon}
@@ -122,10 +126,12 @@ export default function SettingsScreen() {
 
   const handleTimestampToggle = async (value: boolean) => {
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await fileSystemService.setShowTimestamps(value);
       setShowTimestamps(value);
     } catch (error) {
       console.error('Error saving timestamp preference:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
 
@@ -142,12 +148,15 @@ export default function SettingsScreen() {
 
   const handleQuickNoteSelect = async (note: NotePreview | null) => {
     try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const uri = note ? note.filePath : null;
       await fileSystemService.setQuickNoteUri(uri);
       setQuickNoteUri(uri);
       setQuickNoteFilename(note ? note.filename : null);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       console.error('Error saving quick note preference:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', 'Failed to save quick note selection');
     }
   };
@@ -167,33 +176,43 @@ export default function SettingsScreen() {
   };
 
   const handleStorageLocationPress = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (Platform.OS === 'android') {
       Alert.alert(
         'Storage Location',
         'Choose where to save your notes:\n\n• App Folder: Private app storage (default)\n• Custom Folder: Select any folder on your device using Android Storage Access Framework',
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'App Folder', 
-            onPress: async () => {
-              await fileSystemService.setCustomDirectory('');
-              await loadStorageLocation();
-              Alert.alert('Success', 'Notes will be saved to the app\'s private folder');
-            }
-          },
-          { 
-            text: 'Custom Folder', 
+          {
+            text: 'App Folder',
             onPress: async () => {
               try {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                await fileSystemService.setCustomDirectory('');
+                await loadStorageLocation();
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Alert.alert('Success', 'Notes will be saved to the app\'s private folder');
+              } catch (error) {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              }
+            }
+          },
+          {
+            text: 'Custom Folder',
+            onPress: async () => {
+              try {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 const result = await fileSystemService.selectCustomDirectory();
                 if (result) {
                   await loadStorageLocation();
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                   Alert.alert('Success', 'Storage location updated. The app now has persistent permission to access your selected folder.');
                 } else {
                   Alert.alert('Cancelled', 'No folder was selected');
                 }
               } catch (error) {
                 console.error('Directory selection error:', error);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 Alert.alert('Error', 'Failed to select storage location. Please try again.');
               }
             }
@@ -212,19 +231,24 @@ export default function SettingsScreen() {
   };
 
   const handleBackPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.back();
   };
 
   const handleClearAllNotes = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert(
       'Clear All Notes',
       'Are you sure you want to delete all notes? This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete All', 
+        {
+          text: 'Delete All',
           style: 'destructive',
-          onPress: confirmClearAll 
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            confirmClearAll();
+          }
         },
       ]
     );
@@ -237,14 +261,17 @@ export default function SettingsScreen() {
         await fileSystemService.deleteNote(note.filename);
       }
       setNotesCount(0);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert('Success', 'All notes have been deleted');
     } catch (error) {
       console.error('Error clearing notes:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', 'Failed to delete all notes');
     }
   };
 
   const handleExportNotes = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert(
       'Export Notes',
       Platform.OS === 'web'
@@ -258,6 +285,7 @@ export default function SettingsScreen() {
           text: 'Export',
           onPress: async () => {
             try {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               const result = await fileSystemService.exportNotes();
               
               if (result.success) {
@@ -266,8 +294,10 @@ export default function SettingsScreen() {
                 }${
                   Platform.OS === 'ios' ? '\n\nNotes are saved in the app\'s temporary folder. You can access them through the Files app.' : ''
                 }`;
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 Alert.alert('Export Complete', message);
               } else {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 Alert.alert(
                   'Export Failed',
                   result.errors.length > 0 ? result.errors.join('\n') : 'Unknown error occurred'
@@ -275,6 +305,7 @@ export default function SettingsScreen() {
               }
             } catch (error) {
               console.error('Export error:', error);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
               Alert.alert('Export Failed', 'An unexpected error occurred during export.');
             }
           }
@@ -284,6 +315,7 @@ export default function SettingsScreen() {
   };
 
   const handleImportNotes = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert(
       'Import Notes',
       Platform.OS === 'web'
@@ -302,16 +334,19 @@ export default function SettingsScreen() {
             }
             
             try {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               const result = await fileSystemService.importNotes();
               
               if (result.success) {
                 const message = `Successfully imported ${result.importedCount} notes.${
                   result.errors.length > 0 ? `\n\nWarnings:\n${result.errors.join('\n')}` : ''
                 }`;
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
                 Alert.alert('Import Complete', message);
                 // Refresh the notes count
                 await loadNotesCount();
               } else {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
                 Alert.alert(
                   'Import Failed',
                   result.errors.length > 0 ? result.errors.join('\n') : 'No notes were imported'
@@ -319,6 +354,7 @@ export default function SettingsScreen() {
               }
             } catch (error) {
               console.error('Import error:', error);
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
               Alert.alert('Import Failed', 'An unexpected error occurred during import.');
             }
           }
@@ -366,7 +402,10 @@ export default function SettingsScreen() {
   }) => (
     <TouchableOpacity
       style={[styles.settingItem, { backgroundColor: colors.surface }]}
-      onPress={showSwitch ? undefined : onPress}
+      onPress={showSwitch ? undefined : () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress?.();
+      }}
       activeOpacity={showSwitch ? 1 : 0.7}
     >
       <View style={styles.settingIcon}>
@@ -383,7 +422,10 @@ export default function SettingsScreen() {
       {showSwitch && (
         <Switch
           value={switchValue}
-          onValueChange={onSwitchChange}
+          onValueChange={(value) => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onSwitchChange?.(value);
+          }}
           trackColor={{ false: colors.border, true: colors.foam }}
           thumbColor={switchValue ? colors.surface : colors.overlay}
         />
@@ -459,7 +501,10 @@ export default function SettingsScreen() {
             icon={<FileText size={22} color={colors.textMuted} />}
             title="Quick Note"
             subtitle={getQuickNoteDisplayText()}
-            onPress={() => setShowNoteSelector(true)}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setShowNoteSelector(true);
+            }}
           />
         </View>
 

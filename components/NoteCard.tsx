@@ -65,7 +65,10 @@ export default function NoteCard({ note, onPress, onLongPress, showTimestamp = t
 
   return (
     <TouchableOpacity
-      onPress={() => onPress(note)}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress(note);
+      }}
       onLongPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         onLongPress(note);

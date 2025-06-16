@@ -32,7 +32,10 @@ export default function FolderCard({ folder, onPress, onLongPress, showTimestamp
 
   return (
     <TouchableOpacity
-      onPress={() => onPress(folder)}
+      onPress={() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        onPress(folder);
+      }}
       onLongPress={() => {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
         onLongPress(folder);

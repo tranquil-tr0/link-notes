@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus, Search, X, Settings } from 'lucide-react-native';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import MasonryGrid from '@/components/MasonryGrid';
 import NoteCard from '@/components/NoteCard';
 import FolderCard from '@/components/FolderCard';
@@ -109,11 +110,12 @@ export default function FolderScreen() {
   }, [searchQuery, directoryContents]);
 
   const handleCreateNote = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Pass the current folder path so the note is created in the right location
     const currentFolderPath = path ? path.join('/') : '';
     router.push({
       pathname: '/editor',
-      params: { 
+      params: {
         mode: 'create',
         folderPath: currentFolderPath
       }
@@ -121,6 +123,7 @@ export default function FolderScreen() {
   };
 
   const handleNotePress = (note: NoteItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Pass the current folder path so the note is opened from the correct location
     const currentFolderPath = path ? path.join('/') : '';
     router.push({
@@ -134,6 +137,7 @@ export default function FolderScreen() {
   };
 
   const handleFolderPress = (folder: FolderItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Navigate to the subfolder by extending the current path
     const newPath = path ? [...path, folder.name] : [folder.name];
     router.push({
@@ -143,48 +147,63 @@ export default function FolderScreen() {
   };
 
   const handleNoteLongPress = (note: NoteItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Alert.alert(
       'Note Options',
       `What would you like to do with "${formatFilenameAsTitle(note.filename)}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Edit', 
-          onPress: () => handleNotePress(note) 
+        {
+          text: 'Edit',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            handleNotePress(note);
+          }
         },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
-          onPress: () => confirmDelete(note) 
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            confirmDelete(note);
+          }
         },
       ]
     );
   };
 
   const handleFolderLongPress = (folder: FolderItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Alert.alert(
       'Folder Options',
       `What would you like to do with "${folder.name}"?`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Open', 
-          onPress: () => handleFolderPress(folder) 
+        {
+          text: 'Open',
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            handleFolderPress(folder);
+          }
         },
       ]
     );
   };
 
   const confirmDelete = (note: NoteItem) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert(
       'Delete Note',
       `Are you sure you want to delete "${formatFilenameAsTitle(note.filename)}"? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Delete', 
+        {
+          text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteNote(note.filename)
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            deleteNote(note.filename);
+          }
         },
       ]
     );
@@ -195,13 +214,16 @@ export default function FolderScreen() {
       const currentFolderPath = path ? path.join('/') : '';
       await fileSystemService.deleteNote(noteId, currentFolderPath);
       await loadDirectoryContents();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       console.error('Error deleting note:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', 'Failed to delete note. Please try again.');
     }
   };
 
   const toggleSearch = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsSearchVisible(!isSearchVisible);
     if (isSearchVisible) {
       setSearchQuery('');
@@ -209,6 +231,7 @@ export default function FolderScreen() {
   };
 
   const handleSettingsPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/settings');
   };
 

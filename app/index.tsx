@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus, Search, X, Settings } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import MasonryGrid from '@/components/MasonryGrid';
 import NoteCard from '@/components/NoteCard';
 import FolderCard from '@/components/FolderCard';
@@ -119,6 +120,7 @@ export default function HomeScreen() {
   }, [searchQuery, directoryContents]);
 
   const handleCreateNote = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({
       pathname: '/editor',
       params: { mode: 'create' }
@@ -126,6 +128,7 @@ export default function HomeScreen() {
   };
 
   const handleNotePress = (note: NoteItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push({
       pathname: '/editor',
       params: {
@@ -136,6 +139,7 @@ export default function HomeScreen() {
   };
 
   const handleFolderPress = (folder: FolderItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     // Navigate to the folder using the new folder screen
     router.push({
       pathname: '/folder/[...path]',
@@ -144,6 +148,7 @@ export default function HomeScreen() {
   };
 
   const handleNoteLongPress = (note: NoteItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Alert.alert(
       'Note Options',
       `What would you like to do with "${formatFilenameAsTitle(note.filename)}"?`,
@@ -151,18 +156,25 @@ export default function HomeScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Edit',
-          onPress: () => handleNotePress(note)
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            handleNotePress(note);
+          }
         },
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => confirmDelete(note)
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+            confirmDelete(note);
+          }
         },
       ]
     );
   };
 
   const handleFolderLongPress = (folder: FolderItem) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     Alert.alert(
       'Folder Options',
       `What would you like to do with "${folder.name}"?`,
@@ -170,13 +182,17 @@ export default function HomeScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Open',
-          onPress: () => handleFolderPress(folder)
+          onPress: () => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            handleFolderPress(folder);
+          }
         },
       ]
     );
   };
 
   const confirmDelete = (note: NoteItem) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     Alert.alert(
       'Delete Note',
       `Are you sure you want to delete "${formatFilenameAsTitle(note.filename)}"? This action cannot be undone.`,
@@ -185,7 +201,10 @@ export default function HomeScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteNote(note.filename)
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            deleteNote(note.filename);
+          }
         },
       ]
     );
@@ -195,14 +214,17 @@ export default function HomeScreen() {
     try {
       await fileSystemService.deleteNote(noteId);
       await loadDirectoryContents();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
       console.error('Error deleting note:', error);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert('Error', 'Failed to delete note. Please try again.');
     }
   };
 
 
   const toggleSearch = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsSearchVisible(!isSearchVisible);
     if (isSearchVisible) {
       setSearchQuery('');
@@ -210,6 +232,7 @@ export default function HomeScreen() {
   };
 
   const handleSettingsPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.push('/settings');
   };
 

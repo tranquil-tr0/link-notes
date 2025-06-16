@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { X, FileText, Search } from 'lucide-react-native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from './ThemeProvider';
 import { FileSystemService } from '../services/FileSystemService';
 import { NotePreview } from '../types/Note';
@@ -47,11 +48,13 @@ export function NoteSelector({ visible, onClose, onSelectNote, currentQuickNoteU
   };
 
   const handleSelectNote = (note: NotePreview) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onSelectNote(note);
     onClose();
   };
 
   const handleClearSelection = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onSelectNote(null);
     onClose();
   };
@@ -68,7 +71,10 @@ export function NoteSelector({ visible, onClose, onSelectNote, currentQuickNoteU
           <Text style={[styles.title, { color: colors.text }]}>Select Quick Note</Text>
           <TouchableOpacity
             style={[styles.closeButton, { backgroundColor: colors.overlay }]}
-            onPress={onClose}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onClose();
+            }}
             activeOpacity={0.7}
           >
             <X size={20} color={colors.textMuted} />
@@ -123,7 +129,10 @@ export function NoteSelector({ visible, onClose, onSelectNote, currentQuickNoteU
                           borderColor: isSelected ? colors.accent : colors.border,
                         },
                       ]}
-                      onPress={() => handleSelectNote(note)}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        handleSelectNote(note);
+                      }}
                       activeOpacity={0.7}
                     >
                       <View style={styles.noteHeader}>
