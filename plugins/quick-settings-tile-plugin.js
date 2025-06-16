@@ -41,10 +41,12 @@ const withQuickSettingsTile = (config, props = {}) => {
       application.service.push({
         $: {
           'android:name': '.QuickNoteTileService',
+          'android:enabled': 'true',
           'android:label': 'Quick Note',
           'android:icon': '@drawable/ic_quick_note',
           'android:permission': 'android.permission.BIND_QUICK_SETTINGS_TILE',
-          'android:exported': 'true'
+          'android:exported': 'true',
+          'android:process': 'tile'
         },
         'intent-filter': [{
           action: [{
