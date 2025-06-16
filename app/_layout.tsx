@@ -42,7 +42,7 @@ export default function RootLayout() {
         await fileSystemService.loadDirectoryPreference();
         
         // Check if welcome is completed
-        const welcomeCompleted = fileSystemService.getWelcomeCompleted();
+        const welcomeCompleted = await fileSystemService.getWelcomeCompleted();
         
         // Don't navigate here - let the router handle initial navigation
         
