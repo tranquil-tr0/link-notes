@@ -5,18 +5,6 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
-    "linking": {
-      "prefixes": ["myapp://", "exp+link-notes://"],
-      "config": {
-        "screens": {
-          "index": "",
-          "editor": "editor",
-          "settings": "settings",
-          "folder/[...path]": "folder/*"
-        }
-      }
-    },
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

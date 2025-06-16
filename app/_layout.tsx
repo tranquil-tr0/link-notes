@@ -58,6 +58,57 @@ export default function RootLayout() {
     initializeFileSystem();
   }, []);
 
+  // Handle deep linking
+  useEffect(() => {
+    const handleDeepLink = (event: { url: string }) => {
+      const url = event.url;
+      console.log('Deep link received:', url);
+      
+      // Parse the URL to extract parameters
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
+      const searchParams = urlObj.searchParams;
+      
+      // Handle editor deep links
+      // Format: exp+link-notes://editor?mode=edit&noteId=filename.md&folderPath=/path/to/folder
+      if (path === '/editor' || path === 'editor') {
+        const mode = searchParams.get('mode');
+        const noteId = searchParams.get('noteId');
+        const folderPath = searchParams.get('folderPath');
+        
+        if (mode && noteId) {
+          router.push({
+            pathname: '/editor',
+            params: { mode, noteId, folderPath: folderPath || '' }
+          });
+        } else if (mode === 'create') {
+          router.push({
+            pathname: '/editor',
+            params: { mode: 'create', folderPath: folderPath || '' }
+          });
+        }
+      }
+    };
+
+    // Get initial URL (if app was opened from deep link)
+    const getInitialURL = async () => {
+      const initialUrl = await Linking.getInitialURL();
+      if (initialUrl) {
+        handleDeepLink({ url: initialUrl });
+      }
+    };
+
+    // Listen for deep links while app is running
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+
+    // Check for initial URL
+    getInitialURL();
+
+    return () => {
+      subscription?.remove();
+    };
+  }, []);
+
   if (!isInitialized) {
     return (
       <View style={styles.loadingContainer}>
