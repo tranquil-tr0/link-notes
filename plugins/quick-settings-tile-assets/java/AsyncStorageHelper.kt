@@ -11,29 +11,67 @@ object AsyncStorageHelper {
     private const val QUICK_NOTE_URI_KEY = "quickNoteUri"
 
     fun getQuickNoteUri(context: Context): String? {
+        Log.i(TAG, "=== GETTING QUICK NOTE URI FROM ASYNCSTORAGE ===")
+        Log.i(TAG, "Context: ${context.javaClass.simpleName}")
+        Log.i(TAG, "Prefs file: $PREFS_FILE")
+        Log.i(TAG, "User prefs key: $USER_PREFS_KEY")
+        Log.i(TAG, "Quick note URI key: $QUICK_NOTE_URI_KEY")
+        
         return try {
+            // Step 1: Access SharedPreferences
+            Log.d(TAG, "Step 1: Accessing SharedPreferences...")
             val prefs = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
+            Log.i(TAG, "SharedPreferences accessed successfully")
+            
+            // Log all available keys for debugging
+            val allKeys = prefs.all.keys
+            Log.i(TAG, "Available keys in SharedPreferences: $allKeys")
+            Log.i(TAG, "Total keys count: ${allKeys.size}")
+            
+            // Step 2: Get user preferences JSON
+            Log.d(TAG, "Step 2: Retrieving user preferences JSON...")
             val userPrefsJson = prefs.getString(USER_PREFS_KEY, null)
+            Log.i(TAG, "User preferences JSON: ${userPrefsJson ?: "NULL"}")
             
             if (userPrefsJson.isNullOrEmpty()) {
-                Log.d(TAG, "No user preferences found in AsyncStorage")
+                Log.w(TAG, "No user preferences found in AsyncStorage")
+                Log.i(TAG, "Checking if key exists but is empty...")
+                val keyExists = prefs.contains(USER_PREFS_KEY)
+                Log.i(TAG, "Key '$USER_PREFS_KEY' exists: $keyExists")
                 return null
             }
             
-            Log.d(TAG, "Found user preferences: $userPrefsJson")
+            // Step 3: Parse JSON
+            Log.d(TAG, "Step 3: Parsing user preferences JSON...")
             val jsonObject = JSONObject(userPrefsJson)
+            Log.i(TAG, "JSON parsed successfully")
+            Log.i(TAG, "JSON keys: ${jsonObject.keys().asSequence().toList()}")
             
-            return if (jsonObject.has(QUICK_NOTE_URI_KEY) && !jsonObject.isNull(QUICK_NOTE_URI_KEY)) {
+            // Step 4: Extract quick note URI
+            Log.d(TAG, "Step 4: Extracting quick note URI...")
+            val hasQuickNoteKey = jsonObject.has(QUICK_NOTE_URI_KEY)
+            val isQuickNoteNull = jsonObject.isNull(QUICK_NOTE_URI_KEY)
+            Log.i(TAG, "Has quickNoteUri key: $hasQuickNoteKey")
+            Log.i(TAG, "Is quickNoteUri null: $isQuickNoteNull")
+            
+            return if (hasQuickNoteKey && !isQuickNoteNull) {
                 val uri = jsonObject.getString(QUICK_NOTE_URI_KEY)
-                Log.d(TAG, "Found quick note URI: $uri")
+                Log.i(TAG, "Successfully extracted quick note URI: $uri")
+                Log.i(TAG, "URI length: ${uri.length}")
+                Log.i(TAG, "URI type: ${if (uri.startsWith("content://")) "SAF URI" else if (uri.startsWith("file://")) "File URI" else "Unknown"}")
                 uri
             } else {
-                Log.d(TAG, "No quickNoteUri found in user preferences")
+                Log.w(TAG, "No valid quickNoteUri found in user preferences")
                 null
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error reading quick note URI from AsyncStorage", e)
+            Log.e(TAG, "CRITICAL ERROR reading quick note URI from AsyncStorage", e)
+            Log.e(TAG, "Exception type: ${e.javaClass.simpleName}")
+            Log.e(TAG, "Exception message: ${e.message}")
+            Log.e(TAG, "Stack trace: ${e.stackTrace.joinToString("\n")}")
             null
+        } finally {
+            Log.i(TAG, "=== ASYNCSTORAGE ACCESS COMPLETE ===")
         }
     }
 

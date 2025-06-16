@@ -11,46 +11,95 @@ object UriHelper {
      * Handles both SAF URIs (content://) and regular file paths
      */
     fun extractFilenameFromUri(uri: String): String {
+        Log.i(TAG, "=== EXTRACTING FILENAME FROM URI ===")
+        Log.i(TAG, "Input URI: $uri")
+        Log.i(TAG, "URI length: ${uri.length}")
+        
         return try {
-            Log.d(TAG, "Extracting filename from URI: $uri")
+            // Step 1: Determine URI type
+            Log.d(TAG, "Step 1: Determining URI type...")
+            val uriType = when {
+                uri.startsWith("content://") -> "SAF URI"
+                uri.startsWith("file://") -> "File URI"
+                uri.contains("/") -> "File Path"
+                else -> "Unknown"
+            }
+            Log.i(TAG, "URI type: $uriType")
             
+            // Step 2: Extract filename based on type
+            Log.d(TAG, "Step 2: Extracting filename based on type...")
             val filename = when {
                 uri.startsWith("content://") -> {
+                    Log.d(TAG, "Processing SAF URI...")
                     // SAF URI - extract filename from the end
-                    // Example: content://com.android.externalstorage.documents/tree/primary%3ADocuments%2FNotes/document/primary%3ADocuments%2FNotes%2Fmy-note.md
                     val decodedUri = Uri.decode(uri)
+                    Log.i(TAG, "Decoded URI: $decodedUri")
+                    
                     val parts = decodedUri.split("/")
+                    Log.i(TAG, "URI parts: $parts")
+                    Log.i(TAG, "Parts count: ${parts.size}")
+                    
                     val lastPart = parts.lastOrNull() ?: "untitled"
+                    Log.i(TAG, "Last part: $lastPart")
                     
                     // Handle cases where filename might be in different positions
                     if (lastPart.contains(".md")) {
+                        Log.i(TAG, "Found .md in last part")
                         lastPart
                     } else {
+                        Log.d(TAG, "Searching for .md in all parts...")
                         // Try to find .md file in the URI
-                        parts.find { it.contains(".md") } ?: lastPart
+                        val mdPart = parts.find { it.contains(".md") }
+                        Log.i(TAG, "Found .md part: ${mdPart ?: "NONE"}")
+                        mdPart ?: lastPart
                     }
                 }
                 uri.startsWith("file://") -> {
+                    Log.d(TAG, "Processing File URI...")
                     // File URI - extract filename
                     val path = uri.removePrefix("file://")
+                    Log.i(TAG, "File path: $path")
+                    
                     val parts = path.split("/")
-                    parts.lastOrNull() ?: "untitled"
+                    Log.i(TAG, "Path parts: $parts")
+                    
+                    val filename = parts.lastOrNull() ?: "untitled"
+                    Log.i(TAG, "Extracted filename: $filename")
+                    filename
                 }
                 else -> {
+                    Log.d(TAG, "Processing regular file path...")
                     // Regular file path
                     val parts = uri.split("/")
-                    parts.lastOrNull() ?: "untitled"
+                    Log.i(TAG, "Path parts: $parts")
+                    
+                    val filename = parts.lastOrNull() ?: "untitled"
+                    Log.i(TAG, "Extracted filename: $filename")
+                    filename
                 }
             }
             
-            // Remove .md extension if present
+            Log.i(TAG, "Raw filename: $filename")
+            
+            // Step 3: Clean filename
+            Log.d(TAG, "Step 3: Cleaning filename...")
             val cleanFilename = filename.removeSuffix(".md")
-            Log.d(TAG, "Extracted filename: $cleanFilename")
-            cleanFilename
+            Log.i(TAG, "Clean filename: $cleanFilename")
+            
+            if (cleanFilename.isEmpty()) {
+                Log.w(TAG, "Clean filename is empty, using 'untitled'")
+                "untitled"
+            } else {
+                cleanFilename
+            }
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error extracting filename from URI: $uri", e)
+            Log.e(TAG, "CRITICAL ERROR extracting filename from URI: $uri", e)
+            Log.e(TAG, "Exception type: ${e.javaClass.simpleName}")
+            Log.e(TAG, "Exception message: ${e.message}")
             "untitled"
+        } finally {
+            Log.i(TAG, "=== FILENAME EXTRACTION COMPLETE ===")
         }
     }
 
@@ -94,23 +143,64 @@ object UriHelper {
      * Builds a deep link URL for the editor screen
      */
     fun buildEditorDeepLink(filename: String, folderPath: String? = null): String {
+        Log.i(TAG, "=== BUILDING EDITOR DEEP LINK ===")
+        Log.i(TAG, "Input filename: '$filename'")
+        Log.i(TAG, "Input folder path: ${folderPath ?: "NULL"}")
+        
         return try {
-            val encodedFilename = Uri.encode(filename)
-            val baseUrl = "myapp://editor?mode=edit&noteId=$encodedFilename"
+            // Step 1: Validate inputs
+            Log.d(TAG, "Step 1: Validating inputs...")
+            if (filename.isEmpty()) {
+                Log.w(TAG, "Filename is empty, using 'untitled'")
+            }
             
+            // Step 2: Encode filename
+            Log.d(TAG, "Step 2: Encoding filename...")
+            val encodedFilename = Uri.encode(filename)
+            Log.i(TAG, "Encoded filename: '$encodedFilename'")
+            
+            // Step 3: Build base URL
+            Log.d(TAG, "Step 3: Building base URL...")
+            val baseUrl = "myapp://editor?mode=edit&noteId=$encodedFilename"
+            Log.i(TAG, "Base URL: $baseUrl")
+            
+            // Step 4: Add folder path if present
+            Log.d(TAG, "Step 4: Processing folder path...")
             val deepLink = if (folderPath != null) {
+                Log.d(TAG, "Adding folder path to deep link...")
                 val encodedFolderPath = Uri.encode(folderPath)
-                "$baseUrl&folderPath=$encodedFolderPath"
+                Log.i(TAG, "Encoded folder path: '$encodedFolderPath'")
+                val fullUrl = "$baseUrl&folderPath=$encodedFolderPath"
+                Log.i(TAG, "Full URL with folder: $fullUrl")
+                fullUrl
             } else {
+                Log.d(TAG, "No folder path provided, using base URL")
                 baseUrl
             }
             
-            Log.d(TAG, "Built editor deep link: $deepLink")
+            // Step 5: Validate final deep link
+            Log.d(TAG, "Step 5: Validating final deep link...")
+            if (deepLink.startsWith("myapp://editor")) {
+                Log.i(TAG, "Deep link validation successful")
+            } else {
+                Log.w(TAG, "Deep link validation warning: doesn't start with expected prefix")
+            }
+            
+            Log.i(TAG, "Final deep link: $deepLink")
             deepLink
             
         } catch (e: Exception) {
-            Log.e(TAG, "Error building editor deep link for filename: $filename", e)
-            "myapp://editor?mode=edit&noteId=untitled"
+            Log.e(TAG, "CRITICAL ERROR building editor deep link", e)
+            Log.e(TAG, "Exception type: ${e.javaClass.simpleName}")
+            Log.e(TAG, "Exception message: ${e.message}")
+            Log.e(TAG, "Input filename: '$filename'")
+            Log.e(TAG, "Input folder path: ${folderPath ?: "NULL"}")
+            
+            val fallbackLink = "myapp://editor?mode=edit&noteId=untitled"
+            Log.w(TAG, "Using fallback deep link: $fallbackLink")
+            fallbackLink
+        } finally {
+            Log.i(TAG, "=== DEEP LINK BUILDING COMPLETE ===")
         }
     }
 
