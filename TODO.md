@@ -1,6 +1,8 @@
 # Priority
 - add a preview button that renders the markdown
 - put new note button at the bottom (configurable?)
+- direct editor open needs to not have back arrow
+- autosaving
 
 
 # Less priority
