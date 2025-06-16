@@ -32,10 +32,30 @@ class QuickNoteTileService : TileService() {
         //     startActivity(intent)
         // }
         unlockAndRun {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("pinterest://pin/9/")).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            // Collapse the notification shade
+            val collapseStatusBarIntent = Intent("com.android.systemui.statusbar.COLLAPSE_PANEL")
+            collapseStatusBarIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND)
+            sendBroadcast(collapseStatusBarIntent)
+
+            // Try multiple approaches to launch Pinterest
+            try {
+                // First try with explicit package
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("pinterest://pin/9/")).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    setPackage("com.pinterest")
+                }
+                startActivity(intent)
+            } catch (e: Exception) {
+                // Fallback to web URL if Pinterest app is not installed
+                try {
+                    val fallbackIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.pinterest.com/")).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                    }
+                    startActivity(fallbackIntent)
+                } catch (e2: Exception) {
+                    // Log error or show toast if needed
+                }
             }
-            startActivity(intent)
         }
     }
 }
