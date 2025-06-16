@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Plus, Search, X, Settings } from 'lucide-react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { router } from 'expo-router';
 import { HapticsService } from '@/services/HapticsService';
 import MasonryGrid from '@/components/MasonryGrid';
@@ -23,6 +23,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { RADIUS, SPACING } from '@/theme';
 
 export default function HomeScreen() {
+  const { path } = useLocalSearchParams<{ path?: string | string[] }>();
   const [directoryContents, setDirectoryContents] = useState<DirectoryContents>({
     folders: [],
     notes: [],
@@ -44,6 +45,41 @@ export default function HomeScreen() {
   const { colors } = useTheme();
 
   const fileSystemService = FileSystemService.getInstance();
+
+  // Helper function to convert path parameter to array
+  const getPathArray = (): string[] => {
+    if (!path) return [];
+    if (Array.isArray(path)) {
+      return path;
+    }
+    if (typeof path === 'string') {
+      // Handle both slash-separated paths and single path segments
+      if (path.includes('/')) {
+        return path.split('/').filter((p: string) => p.length > 0);
+      } else {
+        return [path];
+      }
+    }
+    return [];
+  };
+
+  // Construct the full directory path from route params
+  const getDirectoryPath = (): string => {
+    const pathArray = getPathArray();
+    
+    if (pathArray.length === 0) {
+      return fileSystemService.getNotesDirectory();
+    }
+    
+    const rootPath = fileSystemService.getNotesDirectory();
+    if (rootPath.startsWith('content://')) {
+      // SAF path
+      return `${rootPath}/${pathArray.join('/')}`;
+    } else {
+      // Regular filesystem path
+      return `${rootPath}${pathArray.join('/')}/`;
+    }
+  };
 
   // Check if welcome needs to be shown
   useEffect(() => {
@@ -71,13 +107,11 @@ export default function HomeScreen() {
       // Load directory preference first to ensure correct storage path
       await fileSystemService.loadDirectoryPreference();
       
-      // Always load root directory contents for home screen
-      fileSystemService.resetToRootDirectory();
-      const contents = await fileSystemService.getDirectoryContents();
+      const targetPath = getDirectoryPath();
+      const contents = await fileSystemService.getDirectoryContents(targetPath);
       setDirectoryContents(contents);
       setFilteredContents(contents);
       
-      // Update timestamp visibility setting
       const showTimestamps = await fileSystemService.getShowTimestamps();
       setShowTimestamp(showTimestamps);
     } catch (error) {
@@ -89,7 +123,7 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       loadDirectoryContents();
-    }, [])
+    }, [path])
   );
 
   // Load FAB position preference
@@ -135,30 +169,42 @@ export default function HomeScreen() {
 
   const handleCreateNote = () => {
     HapticsService.tap();
+    // Pass the current folder path so the note is created in the right location
+    const currentFolderPath = getPathArray().join('/');
     router.push({
       pathname: '/editor',
-      params: { mode: 'create' }
+      params: {
+        mode: 'create',
+        folderPath: currentFolderPath
+      }
     });
   };
 
   const handleNotePress = (note: NoteItem) => {
     HapticsService.selection();
+    // Pass the current folder path so the note is opened from the correct location
+    const currentFolderPath = getPathArray().join('/');
     router.push({
       pathname: '/editor',
       params: {
         mode: 'edit',
-        noteId: note.filename
+        noteId: note.filename,
+        folderPath: currentFolderPath
       }
     });
   };
 
   const handleFolderPress = (folder: FolderItem) => {
     HapticsService.selection();
-    // Navigate to the folder using the new folder screen
-    router.push({
-      pathname: '/folder/[...path]',
-      params: { path: [folder.name] }
-    });
+    // Navigate to the subfolder by extending the current path
+    const currentPathArray = getPathArray();
+    const newPath = [...currentPathArray, folder.name];
+    
+    // Build URL query string manually to ensure proper array handling
+    const pathParams = newPath.map(p => `path=${encodeURIComponent(p)}`).join('&');
+    const url = `/?${pathParams}` as const;
+    
+    router.push(url as any);
   };
 
   const handleNoteLongPress = (note: NoteItem) => {
@@ -226,7 +272,8 @@ export default function HomeScreen() {
 
   const deleteNote = async (noteId: string) => {
     try {
-      await fileSystemService.deleteNote(noteId);
+      const currentFolderPath = getPathArray().join('/');
+      await fileSystemService.deleteNote(noteId, currentFolderPath);
       await loadDirectoryContents();
       HapticsService.success();
     } catch (error) {
@@ -250,6 +297,15 @@ export default function HomeScreen() {
     router.push('/settings');
   };
 
+  // Get the current folder name for display
+  const getCurrentFolderName = (): string => {
+    const pathArray = getPathArray();
+    if (pathArray.length === 0) {
+      return 'Notes';
+    }
+    return pathArray[pathArray.length - 1];
+  };
+
   // Show loading while checking welcome status
   if (checkingWelcome) {
     return (
@@ -271,7 +327,7 @@ export default function HomeScreen() {
         paddingHorizontal: 20
       }]}>
         <View style={styles.headerTop}>
-          <Text style={[styles.title, { color: colors.text }]}>Notes</Text>
+          <Text style={[styles.title, { color: colors.text }]}>{getCurrentFolderName()}</Text>
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={[styles.headerButton, { backgroundColor: colors.overlay }]}
@@ -310,7 +366,7 @@ export default function HomeScreen() {
                 borderColor: colors.border,
                 color: colors.text
               }]}
-              placeholder="Search notes..."
+              placeholder="Search items..."
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
