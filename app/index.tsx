@@ -20,7 +20,7 @@ import { NotePreview } from '@/types/Note';
 import { DirectoryContents, FolderItem, NoteItem } from '@/types/FileSystemItem';
 import { FileSystemService } from '@/services/FileSystemService';
 import { useTheme } from '@/components/ThemeProvider';
-import { SPACING } from '@/theme';
+import { RADIUS, SPACING } from '@/theme';
 
 export default function HomeScreen() {
   const [directoryContents, setDirectoryContents] = useState<DirectoryContents>({
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     padding: 10,
-    borderRadius: 12,
+    borderRadius: RADIUS.large,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
