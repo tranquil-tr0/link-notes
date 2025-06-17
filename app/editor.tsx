@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Trash2, Save } from 'lucide-react-native';
+import { ArrowLeft, Trash2, Save, Eye, EyeOff } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { HapticsService } from '@/services/HapticsService';
 import { useTheme } from '@/components/ThemeProvider';
@@ -26,6 +26,7 @@ import MarkdownEditor from '@/components/MarkdownEditor';
 import { Note } from '@/types/Note';
 import { FileSystemService } from '@/services/FileSystemService';
 import { SPACING } from '@/theme';
+import Markdown from 'react-native-markdown-display';
 
 export default function EditorScreen() {
   const params = useLocalSearchParams();
@@ -34,8 +35,10 @@ export default function EditorScreen() {
   const [note, setNote] = useState<Note | null>(null);
   const [content, setContent] = useState('');
   const [noteTitle, setNoteTitle] = useState('');
-  const [isLoading, setIsLoading] = useState(false);  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [autoSaveOnExit, setAutoSaveOnExit] = useState(false);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
@@ -373,6 +376,19 @@ export default function EditorScreen() {
           <TouchableOpacity
             onPress={() => {
               HapticsService.tap();
+              setIsPreviewMode(!isPreviewMode);
+            }}
+            style={[styles.iconButton, { backgroundColor: colors.overlay }]}
+          >
+            {isPreviewMode ? (
+              <EyeOff size={24} color={colors.gold} />
+            ) : (
+              <Eye size={24} color={colors.gold} />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              HapticsService.tap();
               saveNote();
             }}
             style={[styles.iconButton, { backgroundColor: colors.overlay }]}
@@ -399,21 +415,87 @@ export default function EditorScreen() {
         bottomOffset={50}
         keyboardShouldPersistTaps="handled"
       >
-        <TextInput
-          style={[styles.titleInput, { backgroundColor: colors.background, color: colors.text, borderBottomColor: colors.border }]}
-          placeholder="Untitled"
-          value={noteTitle}
-          onChangeText={handleTitleChange}
-          placeholderTextColor={colors.textMuted}
-        />
-        <View style={styles.editorContainer}>
-          <MarkdownEditor
-            value={content}
-            onChangeText={handleContentChange}
-            onSave={saveNote}
-            placeholder="Start typing your note..."
-          />
-        </View>
+        {isPreviewMode ? (
+          <View style={styles.previewContainer}>
+            <Text style={[styles.previewTitle, { color: colors.text }]}>
+              {noteTitle || 'Untitled'}
+            </Text>
+            <Markdown
+              style={{
+                body: { color: colors.text, backgroundColor: colors.background },
+                heading1: { color: colors.text, fontSize: 32, fontWeight: 'bold' },
+                heading2: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
+                heading3: { color: colors.text, fontSize: 20, fontWeight: 'bold' },
+                heading4: { color: colors.text, fontSize: 18, fontWeight: 'bold' },
+                heading5: { color: colors.text, fontSize: 16, fontWeight: 'bold' },
+                heading6: { color: colors.text, fontSize: 14, fontWeight: 'bold' },
+                paragraph: { color: colors.text, fontSize: 16, lineHeight: 24 },
+                strong: { color: colors.text, fontWeight: 'bold' },
+                em: { color: colors.text, fontStyle: 'italic' },
+                code_inline: {
+                  color: colors.love,
+                  backgroundColor: colors.overlay,
+                  fontFamily: 'monospace',
+                  fontSize: 14,
+                  paddingHorizontal: 4,
+                  paddingVertical: 2,
+                  borderRadius: 4,
+                },
+                code_block: {
+                  color: colors.text,
+                  backgroundColor: colors.overlay,
+                  fontFamily: 'monospace',
+                  fontSize: 14,
+                  padding: 12,
+                  borderRadius: 8,
+                  marginVertical: 8,
+                },
+                fence: {
+                  color: colors.text,
+                  backgroundColor: colors.overlay,
+                  fontFamily: 'monospace',
+                  fontSize: 14,
+                  padding: 12,
+                  borderRadius: 8,
+                  marginVertical: 8,
+                },
+                blockquote: {
+                  color: colors.textMuted,
+                  backgroundColor: colors.surface,
+                  borderLeftColor: colors.iris,
+                  borderLeftWidth: 4,
+                  paddingLeft: 12,
+                  marginVertical: 8,
+                  fontStyle: 'italic',
+                },
+                list_item: { color: colors.text, fontSize: 16, marginVertical: 2 },
+                bullet_list: { marginVertical: 8 },
+                ordered_list: { marginVertical: 8 },
+                link: { color: colors.foam, textDecorationLine: 'underline' },
+              }}
+            >
+              {content || 'No content to preview'}
+            </Markdown>
+          </View>
+        ) : (
+          <>
+            <TextInput
+              style={[styles.titleInput, { backgroundColor: colors.background, color: colors.text, borderBottomColor: colors.border }]}
+              placeholder="Untitled"
+              value={noteTitle}
+              onChangeText={handleTitleChange}
+              placeholderTextColor={colors.textMuted}
+            />
+            <View style={styles.editorContainer}>
+              <MarkdownEditor
+                value={content}
+                onChangeText={handleContentChange}
+                onSave={saveNote}
+                placeholder="Start typing your note..."
+              />
+            </View>
+          </>
+        )}
       </KeyboardAwareScrollView>
     </SafeAreaView>
   );
@@ -479,5 +561,18 @@ const styles = StyleSheet.create({
   },
   editorContainer: {
     flex: 1, // Ensure MarkdownEditor can expand
+  },
+  previewContainer: {
+    flex: 1,
+    paddingHorizontal: 25,
+    paddingVertical: SPACING.padding,
+  },
+  previewTitle: {
+    fontSize: 35,
+    fontWeight: 'bold',
+    marginBottom: SPACING.margin,
+    paddingBottom: SPACING.padding,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
 });
