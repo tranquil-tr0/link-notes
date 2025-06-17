@@ -198,9 +198,24 @@ export default function EditorScreen() {
   };
 
   const saveNote = async (): Promise<boolean> => {
-    if (!content.trim()) {
+    // Allow saving empty notes if they have a title
+    if (!content.trim() && !noteTitle.trim()) {
       HapticsService.error();
-      Alert.alert('Error', 'Cannot save empty note');
+      Alert.alert(
+        'Cannot Save Note',
+        'Cannot save note without title or content',
+        [
+          { text: 'OK', style: 'default' },
+          {
+            text: 'Exit without saving',
+            style: 'destructive',
+            onPress: () => {
+              HapticsService.tap();
+              safeNavigateBack();
+            }
+          }
+        ]
+      );
       return false;
     }
 
