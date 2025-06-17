@@ -1,4 +1,5 @@
 .*/
+plugins/android-build-config-plugin.js
 
 # dependencies
 node_modules/
