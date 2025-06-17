@@ -19,7 +19,7 @@
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.linknotes",
+      "package": "com.tranquildev.linknotes",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.WRITE_EXTERNAL_STORAGE",
