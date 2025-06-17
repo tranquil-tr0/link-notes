@@ -14,12 +14,17 @@ export default {
       supportsTablet: true,
       infoPlist: {
         "UIViewControllerBasedStatusBarAppearance": false
+      },
+      icon: {
+        dark: "./assets/images/ios-dark.png",
+        light: "./assets/images/ios-light.png",
+        tinted: "./assets/images/ios-tinted.png"
       }
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: "./assets/images/icon.png",
-        backgroundColor: "#ffffff"
+        foregroundImage: "./assets/images/adaptive-icon.png",
+        backgroundColor: "#ffd1dc"
       },
       package: "com.tranquildev.linknotes",
       edgeToEdgeEnabled: true,
@@ -41,7 +46,19 @@ export default {
       "expo-web-browser",
       "expo-document-picker",
       "./plugins/quick-settings-tile-plugin.js",
-      ...(ENABLE_BUILD_PLUGIN ? ["./plugins/android-build-config-plugin.js"] : [])
+      ...(ENABLE_BUILD_PLUGIN ? ["./plugins/android-build-config-plugin.js"] : []),
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#ffffff",
+          "image": "./assets/images/splash-icon.png",
+          "dark": {
+            "image": "./assets/images/splash-icon.png",
+            "backgroundColor": "#000000"
+          },
+          "imageWidth": 200
+        }
+      ]
     ],
     experiments: {
       typedRoutes: true
