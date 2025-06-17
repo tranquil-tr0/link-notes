@@ -1,5 +1,6 @@
 # Priority
 - add a preview button that renders the markdown
+- fix parser
 
 # Less priority
 - settings option for note sorting mode (recent, alphabetical)
