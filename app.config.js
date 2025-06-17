@@ -56,7 +56,7 @@ export default {
             "image": "./assets/images/splash-icon.png",
             "backgroundColor": "#000000"
           },
-          "imageWidth": 200
+          "imageWidth": 180
         }
       ]
     ],
