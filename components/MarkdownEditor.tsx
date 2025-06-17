@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Dimensions, Platform } from 'react-native';
-import { MarkdownTextInput, type MarkdownRange } from '@expensify/react-native-live-markdown';
+import { MarkdownTextInput, type MarkdownRange, type MarkdownStyle } from '@expensify/react-native-live-markdown';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from './ThemeProvider';
 
@@ -275,95 +275,24 @@ function parseObsidianMarkdown(input: string): MarkdownRange[] {
   return ranges;
 }
 
-const markdownStyle = {
-  syntax: {
-    color: '#6b7280', // Gray for syntax elements
-    opacity: 0.7,
-  },
-  link: {
-    color: '#3b82f6', // Blue for links and internal links
-    textDecorationLine: 'underline',
-  },
-  h1: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1f2937',
-  },
-  emoji: {
-    fontSize: 20,
-  },
-  blockquote: {
-    borderColor: '#d1d5db',
-    borderWidth: 4,
-    marginLeft: 8,
-    paddingLeft: 12,
-    fontStyle: 'italic',
-    color: '#6b7280',
-  },
-  code: {
-    fontFamily: FONT_FAMILY_MONOSPACE,
-    fontSize: 14,
-    color: '#dc2626',
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-    borderRadius: 3,
-  },
-  pre: {
-    fontFamily: FONT_FAMILY_MONOSPACE,
-    fontSize: 14,
-    color: '#1f2937',
-    backgroundColor: '#f3f4f6',
-    padding: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  bold: {
-    fontWeight: 'bold',
-    color: '#fbbf24', // Yellow-orange for highlights (==text==)
-    backgroundColor: '#fef3c7',
-  },
-  italic: {
-    fontStyle: 'italic',
-  },
-  strikethrough: {
-    textDecorationLine: 'line-through',
-    color: '#6b7280',
-  },
-  mentionHere: {
-    color: 'green',
-    backgroundColor: 'lime',
-  },
-  mentionUser: {
-    color: 'blue',
-    backgroundColor: 'cyan',
-  },
-};
-
 export default function MarkdownEditor({
   value,
   onChangeText,
   onSave,
   placeholder = 'Start typing your note...',
-}: MarkdownEditorProps) {
-  const insets = useSafeAreaInsets();
+}: MarkdownEditorProps) {  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
 
-  // Dynamic markdown style based on theme
-  const dynamicMarkdownStyle = {
+  // Dynamic markdown style based on theme - memoized to prevent unnecessary re-renders
+  const dynamicMarkdownStyle: MarkdownStyle = useMemo(() => ({
     syntax: {
       color: colors.textMuted,
-      opacity: 0.7,
     },
     link: {
       color: colors.foam,
-      textDecorationLine: 'underline',
     },
     h1: {
       fontSize: 24,
-      fontWeight: 'bold',
-      color: colors.text,
     },
     emoji: {
       fontSize: 20,
@@ -373,39 +302,18 @@ export default function MarkdownEditor({
       borderWidth: 4,
       marginLeft: 8,
       paddingLeft: 12,
-      fontStyle: 'italic',
-      color: colors.textMuted,
     },
     code: {
       fontFamily: FONT_FAMILY_MONOSPACE,
       fontSize: 14,
       color: colors.love,
       backgroundColor: colors.overlay,
-      paddingHorizontal: 4,
-      paddingVertical: 2,
-      borderRadius: 3,
     },
     pre: {
       fontFamily: FONT_FAMILY_MONOSPACE,
       fontSize: 14,
       color: colors.text,
       backgroundColor: colors.overlay,
-      padding: 12,
-      borderRadius: 6,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    bold: {
-      fontWeight: 'bold',
-      color: colors.gold,
-      backgroundColor: colors.highlightLow,
-    },
-    italic: {
-      fontStyle: 'italic',
-    },
-    strikethrough: {
-      textDecorationLine: 'line-through',
-      color: colors.textMuted,
     },
     mentionHere: {
       color: colors.pine,
@@ -415,7 +323,7 @@ export default function MarkdownEditor({
       color: colors.iris,
       backgroundColor: colors.highlightLow,
     },
-  };
+  }), [colors]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
