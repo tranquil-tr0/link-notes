@@ -301,6 +301,12 @@ export default function EditorScreen() {
   // Internal back press logic without haptic feedback (used by hardware back button)
   const handleBackPressInternal = () => {
     if (hasUnsavedChanges) {
+      // Special case: if in create mode with no content and no title, exit without prompting
+      if (mode === 'create' && !content.trim() && !noteTitle.trim()) {
+        safeNavigateBack();
+        return;
+      }
+      
       if (autoSaveOnExit) {
         // Auto-save is enabled, save and exit without prompting
         saveAndExit();
