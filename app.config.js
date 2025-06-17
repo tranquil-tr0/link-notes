@@ -4,7 +4,7 @@ export default {
   expo: {
     name: "Link Notes",
     slug: "link-notes",
-    version: "0.1.0",
+    version: "0.1.1",
     orientation: "portrait",
     icon: "./assets/images/icon.png",
     scheme: "linknotes",

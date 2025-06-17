@@ -1139,7 +1139,6 @@ export class FileSystemService {
       parentPath: null, // Web implementation doesn't support folder navigation
     };
   }
-
   /**
    * Helper to separate folders and markdown files
    */
@@ -1147,7 +1146,7 @@ export class FileSystemService {
     const folders: FolderItem[] = [];
     const markdownFiles: any[] = [];
     for (const file of files) {
-      if (file.type === 'directory') {
+      if (file.type === 'directory' && !file.name.startsWith('.')) {
         folders.push({
           name: file.name,
           type: 'folder',
@@ -1185,10 +1184,13 @@ export class FileSystemService {
       } else {
         regularFiles.push(file);
       }
-    }
-
-    const folderPromises = regularFiles.map(async (file) => {
+    }    const folderPromises = regularFiles.map(async (file) => {
       try {
+        // Skip hidden folders (those starting with a period)
+        if (file.startsWith('.')) {
+          return null;
+        }
+        
         const filePath = `${currentDir}${file}`;
         const stat = await FileSystem.getInfoAsync(filePath);
         if (stat.exists && stat.isDirectory) {
