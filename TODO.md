@@ -1,6 +1,7 @@
 # Priority
 - the preview and/or live edit really needs to be able to check checkboxes
 - fix parser - but this might be better spent on making a different one (this in Polish section)
+- the android vibrate permission might be unnecessary
 
 # Less priority
 - settings option for note sorting mode (recent, alphabetical)
