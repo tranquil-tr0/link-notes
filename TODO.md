@@ -4,6 +4,8 @@
 - the android vibrate permission might be unnecessary
 - option to show hidden files/folders
 - choose how folders get sorted
+- I think the tile is running into an error, which causes it to be grayed out
+- stop displaying title with weird capitalized title in note editor
 
 # Less priority
 - settings option for note sorting mode (recent, alphabetical)
