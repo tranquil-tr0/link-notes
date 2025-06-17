@@ -1,6 +1,6 @@
 # Priority
 - add a preview button that renders the markdown
-- fix parser
+- fix parser - but this might be better spent on making a different one (this in Polish section)
 
 # Less priority
 - settings option for note sorting mode (recent, alphabetical)
