@@ -1,5 +1,5 @@
 .*/
-plugins/android-build-config-plugin.js
+.env.local
 
 # dependencies
 node_modules/
