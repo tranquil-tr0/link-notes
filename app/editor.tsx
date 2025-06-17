@@ -25,6 +25,7 @@ import {
 import MarkdownEditor from '@/components/MarkdownEditor';
 import { Note } from '@/types/Note';
 import { FileSystemService } from '@/services/FileSystemService';
+import { SPACING } from '@/theme';
 
 export default function EditorScreen() {
   const params = useLocalSearchParams();
@@ -449,13 +450,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   titleInput: {
-    fontSize: 22,
+    fontSize: 35,
     fontWeight: 'bold',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 25,
+    paddingVertical: SPACING.padding,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
     color: '#333',
+    marginBottom: SPACING.margin,
   },
   editorContainer: {
     flex: 1, // Ensure MarkdownEditor can expand
