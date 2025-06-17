@@ -1,6 +1,5 @@
 # Priority
 - add a preview button that renders the markdown
-- put new note button at the bottom (configurable?)
 
 # Less priority
 - settings option for note sorting mode (recent, alphabetical)
@@ -9,6 +8,7 @@
 - consider uploading images, videos, audio into vault
 - move settings persistence into settings instead of FileSystemService
 - improve popup style/look/aesthetic
+- ability to move notes
 
 # Polish
 - duplicate notes storage to improve loading time (by not requiring IO to show initial content)

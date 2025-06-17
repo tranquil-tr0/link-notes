@@ -161,19 +161,65 @@ function parseObsidianMarkdown(input: string): MarkdownRange[] {
     });
   }
   
-  // Code blocks ```
-  const codeBlockRegex = /```[\s\S]*?```/g;
+  // Track code block ranges to prevent inline code conflicts
+  const codeBlockRanges: Array<{start: number, end: number}> = [];
+  
+  // Code blocks ``` (parse first to establish boundaries)
+  const codeBlockRegex = /```(\w*)\n?([\s\S]*?)```/g;
   while ((match = codeBlockRegex.exec(input)) !== null) {
+    const fullMatch = match[0];
+    const language = match[1] || '';
+    const codeContent = match[2] || '';
+    
+    // Track this code block range
+    codeBlockRanges.push({
+      start: match.index,
+      end: match.index + fullMatch.length
+    });
+    
+    // Find the actual positions
+    const openingLength = 3 + language.length;
+    const hasNewlineAfterOpening = fullMatch.charAt(openingLength) === '\n';
+    const contentStart = match.index + openingLength + (hasNewlineAfterOpening ? 1 : 0);
+    
+    // Opening ``` + language
     ranges.push({
       start: match.index,
-      length: match[0].length,
-      type: 'pre'
+      length: openingLength + (hasNewlineAfterOpening ? 1 : 0),
+      type: 'syntax'
+    });
+    
+    // Code content (only the actual code, not the markers)
+    if (codeContent.length > 0) {
+      ranges.push({
+        start: contentStart,
+        length: codeContent.length,
+        type: 'code'
+      });
+    }
+    
+    // Closing ```
+    const closingStart = contentStart + codeContent.length;
+    ranges.push({
+      start: closingStart,
+      length: 3,
+      type: 'syntax'
     });
   }
   
-  // Inline code `code`
-  const inlineCodeRegex = /`([^`]+)`/g;
+  // Helper function to check if position is inside a code block
+  const isInsideCodeBlock = (position: number): boolean => {
+    return codeBlockRanges.some(range => position >= range.start && position < range.end);
+  };
+  
+  // Inline code `code` (parse after code blocks to avoid conflicts)
+  const inlineCodeRegex = /`([^`\n]+)`/g;
   while ((match = inlineCodeRegex.exec(input)) !== null) {
+    // Skip if this inline code is inside a code block
+    if (isInsideCodeBlock(match.index)) {
+      continue;
+    }
+    
     ranges.push({
       start: match.index,
       length: 1,
