@@ -220,7 +220,7 @@ export default function EditorScreen() {
       await fileSystemService.saveNote(noteToSave, note?.filename, folderPath as string);
       setNote(noteToSave);
       setHasUnsavedChanges(false);
-      HapticsService.success();
+        HapticsService.success();
       
       return true;
     } catch (error) {
@@ -343,10 +343,7 @@ export default function EditorScreen() {
         paddingTop: insets.top,
       }]}>
         <TouchableOpacity
-          onPress={() => {
-            HapticsService.tap();
-            handleBackPress();
-          }}
+          onPress={handleBackPress}
           style={[styles.iconButton, { backgroundColor: colors.overlay }]}
         >
           <ArrowLeft size={24} color={colors.iris} />
